@@ -42,7 +42,7 @@ SUMMARY = {
 
 
 @pytest.fixture(autouse=True)
-def auto_enable_custom_integrations(enable_custom_integrations):
+def auto_enable_custom_integrations(recorder_mock, enable_custom_integrations):
     yield
 
 
@@ -75,7 +75,7 @@ async def _setup(hass: HomeAssistant) -> MockConfigEntry:
     return entry
 
 
-async def test_default_sensors(hass: HomeAssistant, recorder_mock, yazio_api) -> None:
+async def test_default_sensors(recorder_mock, hass: HomeAssistant, yazio_api) -> None:
     await _setup(hass)
     assert hass.states.get("sensor.yazio_calories_today").state == "78"
     assert hass.states.get("sensor.yazio_protein_today").state == "1.3"
@@ -85,7 +85,7 @@ async def test_default_sensors(hass: HomeAssistant, recorder_mock, yazio_api) ->
     assert hass.states.get("sensor.yazio_subscription_status") is None
 
 
-async def test_extra_sensors_when_enabled(hass: HomeAssistant, recorder_mock, yazio_api) -> None:
+async def test_extra_sensors_when_enabled(recorder_mock, hass: HomeAssistant, yazio_api) -> None:
     registry = er.async_get(hass)
     entry = await _setup(hass)
     for key in ("streak", "fasting_plan", "subscription_status", "subscription_end", "water", "current_weight"):
@@ -105,7 +105,7 @@ async def test_extra_sensors_when_enabled(hass: HomeAssistant, recorder_mock, ya
     assert hass.states.get("sensor.yazio_current_weight").state == "113.0"
 
 
-async def test_extras_failing_do_not_break_main_sensor(hass: HomeAssistant, recorder_mock, aioclient_mock) -> None:
+async def test_extras_failing_do_not_break_main_sensor(recorder_mock, hass: HomeAssistant, aioclient_mock) -> None:
     aioclient_mock.post(f"{BASE}/oauth/token", json={"access_token": "tok", "expires_in": 172800})
     aioclient_mock.get(f"{BASE}/user/widgets/daily-summary", json=SUMMARY)
     aioclient_mock.get(f"{BASE}/user/streak", status=500)
@@ -114,7 +114,7 @@ async def test_extras_failing_do_not_break_main_sensor(hass: HomeAssistant, reco
     assert hass.states.get("sensor.yazio_calories_today").state == "78"
 
 
-async def test_import_weight_history(hass: HomeAssistant, recorder_mock, yazio_api) -> None:
+async def test_import_weight_history(recorder_mock, hass: HomeAssistant, yazio_api) -> None:
     entry = await _setup(hass)
     start = dt_util.now().date() - timedelta(days=60)
     result = await hass.services.async_call(

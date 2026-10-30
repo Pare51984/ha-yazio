@@ -6,7 +6,7 @@ Brings the calories you logged in [Yazio](https://www.yazio.com) today into Home
 
 ## What you get
 
-Sensors from Yazio's daily summary, updated every 15 minutes. Daily values reset at local midnight and their long-term statistics hold real daily totals, so a statistics graph with *change* per day shows each day.
+Sensors from Yazio's daily summary, updated every 15 minutes (streak and subscription hourly). Daily values reset at local midnight and their long-term statistics hold real daily totals, so a statistics graph with *change* per day shows each day.
 
 | Sensor | Enabled by default |
 |---|---|
@@ -15,10 +15,19 @@ Sensors from Yazio's daily summary, updated every 15 minutes. Daily values reset
 | Calories per meal (breakfast, lunch, dinner, snacks) | no |
 | Water, steps, activity calories today (as recorded in Yazio) | no |
 | Goals for protein, fat, carbs, water, steps, goal weight; current weight | no |
+| Streak (days in a row you logged), with streak freezes as attribute | no |
+| Active fasting plan (e.g. `16:8`, or `inactive`) | no |
+| Subscription status (e.g. `active`, `cancelled`, `none`) and subscription end date | no |
 
 Disabled sensors can be switched on under *Settings → Devices & services → Yazio → entities*. Steps, activity and weight usually come from another app or device; they are off by default so you don't get the same value twice.
 
 The integration only reads. It never writes to your Yazio diary.
+
+### Import your weight history
+
+Weighed yourself in Yazio for years? The action **Yazio: Import weight history** (`yazio.import_weight_history`) copies those entries into Home Assistant's long-term statistics. Optional field: `start_date` (default: 5 years back). Afterwards add a *Statistics graph* card and pick the statistic **Yazio weight**. Running it again is safe.
+
+The fasting sensor only shows which plan is active. Timer details (start, end, progress) are not exposed by the API in a documented form yet. If you use fasting and want more, open an issue.
 
 ## Requirements
 
