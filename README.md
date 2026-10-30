@@ -8,18 +8,29 @@ Brings what you log in [Yazio](https://www.yazio.com) into Home Assistant as sen
 
 Sensors from your Yazio account, updated every 15 minutes (streak and subscription hourly). Daily values reset at local midnight and their long-term statistics hold real daily totals, so a statistics graph with *change* per day shows each day.
 
-| Sensor | Enabled by default |
-|---|---|
-| Calories, protein, fat, carbs eaten today | yes |
-| Calorie goal | yes |
-| Calories per meal (breakfast, lunch, dinner, snacks) | no |
-| Water, steps, activity calories today (as recorded in Yazio) | no |
-| Goals for protein, fat, carbs, water, steps, goal weight; current weight | no |
-| Streak (days in a row you logged, `0` if none), with streak freezes as attribute | no |
-| Active fasting plan: Yazio's internal plan name, e.g. `16_8_early_fasting_v2`, or `inactive` | no |
-| Subscription status as reported by Yazio (e.g. `will_renew`; `none` if you never had Pro) and subscription end date. Attributes: plan type, store, start, last change | no |
+All sensors below are included. The ones marked *off* are created but switched off after setup, so your entity list stays tidy; switch on what you need.
 
-Disabled sensors can be switched on under *Settings → Devices & services → Yazio → entities*. Steps, activity and weight usually come from another app or device; they are off by default so you don't get the same value twice.
+| Sensor | Unit | After setup |
+|---|---|---|
+| Calories today | kcal | **on** |
+| Protein today | g | **on** |
+| Fat today | g | **on** |
+| Carbs today | g | **on** |
+| Calorie goal | kcal | **on** |
+| Breakfast / lunch / dinner / snack calories | kcal | off |
+| Water today | mL | off |
+| Steps today | steps | off |
+| Activity calories today | kcal | off |
+| Protein / fat / carbs goal | g | off |
+| Water goal | mL | off |
+| Step goal | steps | off |
+| Goal weight / current weight | kg | off |
+| Streak (days in a row you logged, `0` if none; streak freezes as attribute) | d | off |
+| Active fasting plan (Yazio's internal plan name, e.g. `16_8_early_fasting_v2`, or `inactive`) | – | off |
+| Subscription status (as reported by Yazio, e.g. `will_renew`; `none` if you never had Pro; attributes: plan type, store, start, last change) | – | off |
+| Subscription ends | date | off |
+
+Switch sensors on under *Settings → Devices & services → Yazio → entities*. Steps, activity and weight usually come from another app or device; they are off by default so you don't get the same value twice.
 
 The integration only reads. It never writes to your Yazio diary.
 
