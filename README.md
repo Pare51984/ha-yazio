@@ -44,9 +44,18 @@ The sensors only read. Something is written to your Yazio diary only when you ca
 
 Weighed yourself in Yazio for years? The action **Yazio: Import weight history** (`yazio.import_weight_history`) copies those entries into Home Assistant's long-term statistics. Optional field: `start_date` (default: 5 years back). Afterwards add a *Statistics graph* card and pick the statistic **Yazio weight**. Running it again is safe.
 
+### Options
+
+Under *Settings → Devices & services → Yazio → Configure*:
+
+| Option | Default | What it does |
+|---|---|---|
+| Fasting calendar | off | Calendar with your fasting windows (see below) |
+| Update interval | 15 min | How often Yazio is polled: 5, 15 or 30 minutes. Right after midnight it always updates, so daily values start at 0 on time. |
+
 ### Fasting calendar (optional)
 
-Under *Settings → Devices & services → Yazio → Configure* you can switch on **Fasting calendar**. It adds a calendar with one event per fasting window of your Yazio plan, shown in Home Assistant's calendar view and usable as an automation trigger. Switching it off removes the calendar again. Off by default.
+Switch on **Fasting calendar** under *Configure*. It adds a calendar with one event per fasting window of your Yazio plan, shown in Home Assistant's calendar view and usable as an automation trigger. Switching it off removes the calendar again. Off by default.
 
 Want the fasting windows in another calendar (e.g. Google)? Copy them with an automation. Example, runs daily and adds tomorrow's windows (replace both calendar entities with yours):
 
@@ -136,6 +145,7 @@ HACS checks custom repositories for new versions only about every 48 hours. To s
 ## Notes
 
 - Your password is stored in Home Assistant's config entry, like with other cloud integrations.
+- The integration is listed as `Yazio (ab…@example.com)`, so the full email address doesn't show up in screenshots.
 - When the token expires the integration signs in again instead of refreshing it. Community reports say a token refresh at Yazio signs out your other sessions, including the app on your phone.
 
 ## Issues

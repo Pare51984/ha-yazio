@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0
+- New option *Update interval* (5, 15 or 30 minutes, default 15).
+- Daily values update right after midnight instead of up to one interval later.
+- The integration is now titled `Yazio (ab…@example.com)` instead of the full email address; existing installations are renamed automatically. Entities and history are not affected.
+- Translated states for subscription status, feeling (`none`) and fasting plan (`inactive`).
+
 ## 0.7.0
 - New option *Fasting calendar* under Configure: a calendar with one event per fasting window of your Yazio plan. Off by default; switching it off removes the calendar again.
 - README: example automation to copy the fasting windows into another calendar.

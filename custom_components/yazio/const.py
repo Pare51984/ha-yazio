@@ -8,6 +8,9 @@ CONF_EMAIL = "email"
 CONF_PASSWORD = "password"
 # Option: show the fasting plan as a calendar (off by default).
 CONF_FASTING_CALENDAR = "fasting_calendar"
+# Option: polling interval in minutes.
+CONF_SCAN_INTERVAL = "scan_interval"
+SCAN_INTERVAL_CHOICES = [5, 15, 30]
 
 SCAN_INTERVAL = timedelta(minutes=15)
 # Streak and subscription change rarely.

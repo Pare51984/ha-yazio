@@ -89,10 +89,24 @@
         "name": "Streak"
       },
       "fasting_plan": {
-        "name": "Aktiver Fastenplan"
+        "name": "Aktiver Fastenplan",
+        "state": {
+          "inactive": "Kein Plan"
+        }
       },
       "subscription_status": {
-        "name": "Abo-Status"
+        "name": "Abo-Status",
+        "state": {
+          "will_renew": "Verlängert sich automatisch",
+          "will_not_renew": "Verlängert sich nicht",
+          "canceled": "Gekündigt",
+          "cancelled": "Gekündigt",
+          "expired": "Abgelaufen",
+          "on_hold": "Pausiert",
+          "paused": "Pausiert",
+          "grace_period": "Kulanzzeitraum",
+          "none": "Kein Abo"
+        }
       },
       "subscription_end": {
         "name": "Abo endet"
@@ -110,7 +124,10 @@
         "name": "Trainingskalorien heute"
       },
       "feeling": {
-        "name": "Stimmung heute"
+        "name": "Stimmung heute",
+        "state": {
+          "none": "Kein Eintrag"
+        }
       },
       "fasting_status": {
         "name": "Fastenstatus",
@@ -232,10 +249,12 @@
       "init": {
         "title": "Yazio Optionen",
         "data": {
-          "fasting_calendar": "Fastenkalender"
+          "fasting_calendar": "Fastenkalender",
+          "scan_interval": "Abfrage-Intervall (Minuten)"
         },
         "data_description": {
-          "fasting_calendar": "Zeigt die Fastenfenster deines Yazio-Plans als Kalender in Home Assistant. Ausschalten entfernt den Kalender wieder."
+          "fasting_calendar": "Zeigt die Fastenfenster deines Yazio-Plans als Kalender in Home Assistant. Ausschalten entfernt den Kalender wieder.",
+          "scan_interval": "Wie oft Yazio abgefragt wird. Um Mitternacht wird zusätzlich sofort aktualisiert."
         }
       }
     }

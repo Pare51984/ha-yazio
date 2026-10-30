@@ -12,9 +12,25 @@ from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .api import YazioApiError, YazioAuthError, YazioClient
-from .const import CONF_EMAIL, CONF_FASTING_CALENDAR, CONF_PASSWORD, DOMAIN
+from .const import (
+    CONF_EMAIL,
+    CONF_FASTING_CALENDAR,
+    CONF_PASSWORD,
+    CONF_SCAN_INTERVAL,
+    DOMAIN,
+    SCAN_INTERVAL,
+    SCAN_INTERVAL_CHOICES,
+)
 
 SCHEMA = vol.Schema({vol.Required(CONF_EMAIL): str, vol.Required(CONF_PASSWORD): str})
+
+
+def entry_title(email: str) -> str:
+    """'Yazio (re…@gmail.com)': recognisable without showing the full address."""
+    local, _, domain = email.partition("@")
+    if not domain:
+        return "Yazio"
+    return f"Yazio ({local[:2]}…@{domain})"
 
 
 class YazioConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -46,7 +62,7 @@ class YazioConfigFlow(ConfigFlow, domain=DOMAIN):
             error = await self._test(email, user_input[CONF_PASSWORD])
             if error is None:
                 return self.async_create_entry(
-                    title=email, data={CONF_EMAIL: email, CONF_PASSWORD: user_input[CONF_PASSWORD]}
+                    title=entry_title(email), data={CONF_EMAIL: email, CONF_PASSWORD: user_input[CONF_PASSWORD]}
                 )
             errors["base"] = error
         return self.async_show_form(step_id="user", data_schema=SCHEMA, errors=errors)
@@ -79,8 +95,18 @@ class YazioOptionsFlow(OptionsFlow):
     async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         if user_input is not None:
             return self.async_create_entry(data=user_input)
-        current = self.config_entry.options.get(CONF_FASTING_CALENDAR, False)
+        options = self.config_entry.options
+        default_interval = int(SCAN_INTERVAL.total_seconds() // 60)
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema({vol.Required(CONF_FASTING_CALENDAR, default=current): bool}),
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_FASTING_CALENDAR, default=options.get(CONF_FASTING_CALENDAR, False)
+                    ): bool,
+                    vol.Required(
+                        CONF_SCAN_INTERVAL, default=options.get(CONF_SCAN_INTERVAL, default_interval)
+                    ): vol.In(SCAN_INTERVAL_CHOICES),
+                }
+            ),
         )

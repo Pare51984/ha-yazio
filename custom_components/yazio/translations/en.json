@@ -89,10 +89,24 @@
         "name": "Streak"
       },
       "fasting_plan": {
-        "name": "Active fasting plan"
+        "name": "Active fasting plan",
+        "state": {
+          "inactive": "No plan"
+        }
       },
       "subscription_status": {
-        "name": "Subscription status"
+        "name": "Subscription status",
+        "state": {
+          "will_renew": "Renews automatically",
+          "will_not_renew": "Does not renew",
+          "canceled": "Canceled",
+          "cancelled": "Canceled",
+          "expired": "Expired",
+          "on_hold": "On hold",
+          "paused": "Paused",
+          "grace_period": "Grace period",
+          "none": "No subscription"
+        }
       },
       "subscription_end": {
         "name": "Subscription ends"
@@ -110,7 +124,10 @@
         "name": "Training calories today"
       },
       "feeling": {
-        "name": "Feeling today"
+        "name": "Feeling today",
+        "state": {
+          "none": "No entry"
+        }
       },
       "fasting_status": {
         "name": "Fasting status",
@@ -232,10 +249,12 @@
       "init": {
         "title": "Yazio options",
         "data": {
-          "fasting_calendar": "Fasting calendar"
+          "fasting_calendar": "Fasting calendar",
+          "scan_interval": "Update interval (minutes)"
         },
         "data_description": {
-          "fasting_calendar": "Shows the fasting windows of your Yazio plan as a calendar in Home Assistant. Switching it off removes the calendar again."
+          "fasting_calendar": "Shows the fasting windows of your Yazio plan as a calendar in Home Assistant. Switching it off removes the calendar again.",
+          "scan_interval": "How often Yazio is polled. Additionally updates right after midnight."
         }
       }
     }

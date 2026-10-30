@@ -311,7 +311,7 @@ async def test_fasting_calendar_option(recorder_mock, hass: HomeAssistant, yazio
 
     # Switch on via "Configure".
     flow = await hass.config_entries.options.async_init(entry.entry_id)
-    result = await hass.config_entries.options.async_configure(flow["flow_id"], {"fasting_calendar": True})
+    result = await hass.config_entries.options.async_configure(flow["flow_id"], {"fasting_calendar": True, "scan_interval": 15})
     assert result["type"] == "create_entry"
     await hass.async_block_till_done()
     entity_id = registry.async_get_entity_id("calendar", DOMAIN, f"{entry.entry_id}_fasting_calendar")
@@ -333,7 +333,41 @@ async def test_fasting_calendar_option(recorder_mock, hass: HomeAssistant, yazio
 
     # Switch off: the calendar is removed completely.
     flow = await hass.config_entries.options.async_init(entry.entry_id)
-    await hass.config_entries.options.async_configure(flow["flow_id"], {"fasting_calendar": False})
+    await hass.config_entries.options.async_configure(flow["flow_id"], {"fasting_calendar": False, "scan_interval": 15})
     await hass.async_block_till_done()
     assert registry.async_get_entity_id("calendar", DOMAIN, f"{entry.entry_id}_fasting_calendar") is None
     assert hass.states.get(entity_id) is None
+
+
+async def test_title_hides_email(recorder_mock, hass: HomeAssistant, yazio_api) -> None:
+    entry = await _setup(hass)  # created with the old title (plain email)
+    assert entry.title == "Yazio (a…@b.de)"
+    assert entry.data["email"] == "a@b.de"
+
+
+async def test_scan_interval_option(recorder_mock, hass: HomeAssistant, yazio_api) -> None:
+    entry = await _setup(hass)
+    assert entry.runtime_data.update_interval == timedelta(minutes=15)
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    await hass.config_entries.options.async_configure(
+        flow["flow_id"], {"fasting_calendar": False, "scan_interval": 5}
+    )
+    await hass.async_block_till_done()
+    assert entry.runtime_data.update_interval == timedelta(minutes=5)
+
+
+async def test_refresh_after_midnight(recorder_mock, hass: HomeAssistant, yazio_api, freezer) -> None:
+    from pytest_homeassistant_custom_component.common import async_fire_time_changed
+
+    entry = await _setup(hass)
+    tz = dt_util.get_default_time_zone()
+    from datetime import datetime
+
+    tomorrow = dt_util.now().date() + timedelta(days=1)
+    midnight = datetime.combine(tomorrow, datetime.min.time(), tz) + timedelta(seconds=20)
+    yazio_api.mock_calls.clear()
+    freezer.move_to(midnight)
+    async_fire_time_changed(hass, midnight)
+    await hass.async_block_till_done()
+    assert any("daily-summary" in str(url) for _, url, _, _ in yazio_api.mock_calls)
+    assert entry.runtime_data.data["date"] == tomorrow.isoformat()

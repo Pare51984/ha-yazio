@@ -17,6 +17,7 @@ from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, Supp
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers import config_validation as cv, entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.event import async_track_time_change
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
@@ -33,7 +34,15 @@ from .api import (
     parse_summary,
     parse_weight_history,
 )
-from .const import CONF_EMAIL, CONF_FASTING_CALENDAR, CONF_PASSWORD, DOMAIN, EXTRA_INTERVAL, SCAN_INTERVAL
+from .const import (
+    CONF_EMAIL,
+    CONF_FASTING_CALENDAR,
+    CONF_PASSWORD,
+    CONF_SCAN_INTERVAL,
+    DOMAIN,
+    EXTRA_INTERVAL,
+    SCAN_INTERVAL,
+)
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.SENSOR]
@@ -57,8 +66,13 @@ class YazioCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Polls Yazio. Daily summary every 15 min, streak and subscription hourly."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry, client: YazioClient) -> None:
+        minutes = entry.options.get(CONF_SCAN_INTERVAL)
         super().__init__(
-            hass, _LOGGER, config_entry=entry, name=DOMAIN, update_interval=SCAN_INTERVAL
+            hass,
+            _LOGGER,
+            config_entry=entry,
+            name=DOMAIN,
+            update_interval=timedelta(minutes=minutes) if minutes else SCAN_INTERVAL,
         )
         self.client = client
         self._extras: dict[str, Any] = {}
@@ -331,6 +345,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     client = YazioClient(
         async_get_clientsession(hass), entry.data[CONF_EMAIL], entry.data[CONF_PASSWORD]
     )
+    # Older versions used the plain email address as title.
+    if entry.title == entry.data[CONF_EMAIL]:
+        from .config_flow import entry_title
+
+        hass.config_entries.async_update_entry(entry, title=entry_title(entry.data[CONF_EMAIL]))
     coordinator = YazioCoordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
@@ -343,6 +362,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         ):
             registry.async_remove(entity_id)
     entry.async_on_unload(entry.add_update_listener(_async_options_updated))
+
+    async def _new_day(_now: datetime) -> None:
+        # Start the new day right away instead of up to one interval later.
+        await coordinator.async_request_refresh()
+
+    entry.async_on_unload(async_track_time_change(hass, _new_day, hour=0, minute=0, second=20))
     return True
 
 
