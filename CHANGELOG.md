@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.2
+- Releases are now created only after the HACS and hassfest checks passed. No functional changes.
+
 ## 0.5.1
 - Own icon and logo for the integration (shown in Home Assistant 2026.3 and newer).
 

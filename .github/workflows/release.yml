@@ -1,13 +1,13 @@
 name: Release
 
-# Creates tag + GitHub release whenever the version in manifest.json
-# changes on main and no release for that version exists yet.
+# Runs after "Validate" (HACS action + hassfest) finished successfully on main
+# and creates tag + GitHub release for the version in manifest.json, if that
+# release does not exist yet. So every release is created after validation passed.
 on:
-  push:
+  workflow_run:
+    workflows: [Validate]
+    types: [completed]
     branches: [main]
-    paths:
-      - "custom_components/yazio/manifest.json"
-      - ".github/workflows/release.yml"
   workflow_dispatch:
 
 permissions:
@@ -15,12 +15,16 @@ permissions:
 
 jobs:
   release:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
       - name: Create release if missing
         env:
           GH_TOKEN: ${{ github.token }}
+          TARGET: ${{ github.event.workflow_run.head_sha || github.sha }}
         run: |
           VER=$(python3 -c "import json;print(json.load(open('custom_components/yazio/manifest.json'))['version'])")
           TAG="v$VER"
@@ -30,7 +34,7 @@ jobs:
           fi
           NOTES_FILE="release-notes/$TAG.md"
           if [ -f "$NOTES_FILE" ]; then
-            gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --notes-file "$NOTES_FILE"
+            gh release create "$TAG" --target "$TARGET" --title "$TAG" --notes-file "$NOTES_FILE"
           else
-            gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --generate-notes
+            gh release create "$TAG" --target "$TARGET" --title "$TAG" --generate-notes
           fi
