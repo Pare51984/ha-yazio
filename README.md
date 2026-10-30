@@ -87,7 +87,7 @@ actions:
 
 Note: Home Assistant can create events in most calendars but cannot delete them, so copied events stay when you stop the automation.
 
-### Write actions (experimental)
+### Write actions
 
 These actions write to your Yazio diary, for example from an NFC tag, a button or an automation:
 
@@ -97,7 +97,7 @@ These actions write to your Yazio diary, for example from an NFC tag, a button o
 | `yazio.add_weight` | `weight` in kg, optional `when` |
 | `yazio.add_food` | `name`, `calories`, optional `protein` / `fat` / `carbs` in g, `meal` (breakfast, lunch, dinner, snack) |
 
-Yazio's API is not documented, so these are experimental. Check the result in the app the first times. `add_food` creates a simple entry with your own name and values, not a product from Yazio's database.
+All three were tested against a real Yazio account. Yazio's API is unofficial, so if Yazio changes it, an action may stop working; you'd get an error message in Home Assistant. Home Assistant shows the new values right after each entry; the Yazio app may need to be reopened. `add_food` creates a simple entry with your own name and values, not a product from Yazio's database.
 
 ### Fasting, feeling and trainings
 

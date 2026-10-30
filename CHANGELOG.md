@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.2
+- Write actions (`add_water`, `add_weight`, `add_food`) tested against a real account and no longer marked experimental.
+- After each write action the sensors update right away, also when several entries are made in a row.
+
 ## 0.8.1
 - Subscription status: every cancelled / non-renewing value from Yazio now shows as *Does not renew*. Yazio's original value is kept as attribute `subscription_raw_status`.
 

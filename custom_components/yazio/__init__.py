@@ -194,7 +194,8 @@ async def _async_write(hass: HomeAssistant, entry: ConfigEntry, path: str, paylo
         await coordinator.client.async_post(path, payload)
     except YazioApiError as err:
         raise HomeAssistantError(f"Yazio did not accept the entry: {err}") from err
-    await coordinator.async_request_refresh()
+    # Not debounced: several entries in a row each show up right away.
+    await coordinator.async_refresh()
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:

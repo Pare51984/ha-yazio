@@ -210,7 +210,7 @@
     },
     "add_food": {
       "name": "Essen eintragen (Schnelleintrag)",
-      "description": "Trägt einen Schnelleintrag mit Kalorien und optional Makros ins Yazio-Tagebuch ein. Experimentell.",
+      "description": "Trägt einen Schnelleintrag mit Kalorien und optional Makros ins Yazio-Tagebuch ein.",
       "fields": {
         "config_entry_id": {
           "name": "Yazio-Konto",

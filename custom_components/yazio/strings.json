@@ -210,7 +210,7 @@
     },
     "add_food": {
       "name": "Add food (quick entry)",
-      "description": "Adds a quick entry with calories and optional macros to your Yazio diary. Experimental.",
+      "description": "Adds a quick entry with calories and optional macros to your Yazio diary.",
       "fields": {
         "config_entry_id": {
           "name": "Yazio account",
