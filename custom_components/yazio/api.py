@@ -300,28 +300,42 @@ def parse_feeling(data: Any) -> dict[str, Any]:
     return {"feeling": state, "feeling_note": note}
 
 
-def parse_fasting(data: Any) -> dict[str, Any]:
-    """Fasten-Countdowns. Das Format ist nicht dokumentiert.
+def _day_time(value: Any) -> tuple[int, str] | None:
+    if not isinstance(value, dict):
+        return None
+    day, clock = value.get("day"), value.get("time")
+    if not isinstance(day, int) or not isinstance(clock, str) or clock.count(":") not in (1, 2):
+        return None
+    return day, clock if clock.count(":") == 2 else f"{clock}:00"
 
-    Bewusst defensiv: Zustand "active", wenn ein Eintrag da ist, sonst "none";
-    einfache Felder des ersten Eintrags als Attribute, damit man in Home
-    Assistant sieht, was Yazio liefert.
+
+def parse_fasting(data: Any) -> dict[str, Any]:
+    """Aktiver Fasten-Countdown.
+
+    Yazio liefert den Plan relativ zum Starttag: fasting_periods mit
+    {"start": {"day": 0, "time": "20:00:00"}, "end": {"day": 1, "time": "11:59:59"}},
+    "start" als lokale Zeit und skipped_meals je Tag. Die Umrechnung in echte
+    Uhrzeiten passiert im Sensor, weil dort die Zeitzone bekannt ist.
     """
     entry: Any = data
     if isinstance(data, list):
         entry = data[0] if data else None
-    elif isinstance(data, dict):
-        for key in ("countdown", "active", "current", "items", "countdowns"):
-            inner = data.get(key)
-            if isinstance(inner, list):
-                entry = inner[0] if inner else None
-                break
-            if isinstance(inner, dict):
-                entry = inner
-                break
     if not isinstance(entry, dict) or not entry:
-        return {"fasting_status": "none", "fasting_details": {}}
-    details = {
-        k: v for k, v in entry.items() if isinstance(v, (str, int, float, bool)) or v is None
-    }
-    return {"fasting_status": "active", "fasting_details": details}
+        return {"fasting_status": "none", "fasting_plan_data": None, "fasting_details": {}}
+    periods = []
+    for period in entry.get("fasting_periods") or []:
+        if not isinstance(period, dict):
+            continue
+        begin, end = _day_time(period.get("start")), _day_time(period.get("end"))
+        if begin and end:
+            periods.append((begin, end))
+    skipped = {}
+    for item in entry.get("skipped_meals") or []:
+        if isinstance(item, dict) and isinstance(item.get("day_index"), int):
+            skipped[item["day_index"]] = [m for m in item.get("meals_to_skip") or [] if isinstance(m, str)]
+    plan = None
+    start = entry.get("start")
+    if periods and isinstance(start, str) and len(start) >= 10:
+        plan = {"start_date": start[:10], "periods": periods, "skipped_meals": skipped}
+    details = {"plan": entry.get("key") or entry.get("template_key")}
+    return {"fasting_status": "active", "fasting_plan_data": plan, "fasting_details": details}

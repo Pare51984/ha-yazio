@@ -77,7 +77,19 @@ def yazio_api(aioclient_mock):
         json={"training": [{"name": "cycling", "energy": 321.0, "duration": 45}], "custom_training": [{"name": "Gym", "energy": 171.0, "duration": 66}], "activity": {"steps": 8132}},
     )
     aioclient_mock.get(f"{BASE}/user/feeling", json={"note": "good day", "tags": ["happy", "energetic"]})
-    aioclient_mock.get(f"{BASE}/user/fasting-countdowns", json=[{"template_key": "16_8_early_fasting_v2", "start": f"{today} 20:00:00"}])
+    aioclient_mock.get(
+        f"{BASE}/user/fasting-countdowns",
+        json={
+            "key": "16_8_early_fasting_v2",
+            "fasting_periods": [
+                {"start": {"day": d, "time": "20:00:00"}, "end": {"day": d + 1, "time": "11:59:59"}} for d in range(7)
+            ],
+            "start": f"{today} 10:25:40",
+            "patches": [],
+            "skipped_meals": [{"day_index": d, "meals_to_skip": ["breakfast", "snack"]} for d in range(7)],
+            "fasting_countdown_id": "820f21da-0000",
+        },
+    )
     aioclient_mock.get(f"{BASE}/user/water-intake", json={"water_intake": 250.0, "gateway": None, "source": None})
     aioclient_mock.post(f"{BASE}/user/water-intake", status=204)
     aioclient_mock.post(f"{BASE}/user/bodyvalues", status=204)
@@ -209,7 +221,10 @@ async def test_today_details_sensors(recorder_mock, hass: HomeAssistant, yazio_a
     feeling = hass.states.get(ids["feeling"])
     assert feeling.state == "happy, energetic" and feeling.attributes["feeling_note"] == "good day"
     fasting = hass.states.get(ids["fasting_status"])
-    assert fasting.state == "active" and fasting.attributes["template_key"] == "16_8_early_fasting_v2"
+    assert fasting.state in ("fasting", "eating")
+    assert fasting.attributes["plan"] == "16_8_early_fasting_v2"
+    assert fasting.attributes["meals_to_skip_today"] == ["breakfast", "snack"]
+    assert fasting.attributes["next_change"]
 
 
 async def test_disabled_details_are_not_fetched(recorder_mock, hass: HomeAssistant, yazio_api) -> None:
@@ -254,4 +269,34 @@ async def test_diagnostics_hide_login_and_food(recorder_mock, hass: HomeAssistan
     text = str(diag)
     assert "a@b.de" not in text and "'x'" not in text
     assert "Shake" not in text  # food names are reduced to field names
-    assert diag["raw_extras"]["fasting"][0]["template_key"] == "16_8_early_fasting_v2"
+    assert diag["raw_extras"]["fasting"]["key"] == "16_8_early_fasting_v2"
+    assert "820f21da" not in text
+
+
+def test_fasting_state_windows(hass: HomeAssistant) -> None:
+    from datetime import datetime
+
+    from custom_components.yazio.api import parse_fasting
+    from custom_components.yazio.sensor import fasting_state
+
+    plan = parse_fasting(
+        {
+            "key": "16_8",
+            "fasting_periods": [
+                {"start": {"day": d, "time": "20:00:00"}, "end": {"day": d + 1, "time": "11:59:59"}} for d in range(7)
+            ],
+            "start": "2026-10-30 10:25:40",
+            "skipped_meals": [{"day_index": 0, "meals_to_skip": ["breakfast"]}],
+        }
+    )["fasting_plan_data"]
+    tz = dt_util.get_default_time_zone()
+    state, attrs, change = fasting_state(plan, datetime(2026, 10, 30, 13, 34, tzinfo=tz))
+    assert state == "eating" and change == datetime(2026, 10, 30, 20, 0, tzinfo=tz)
+    assert attrs["meals_to_skip_today"] == ["breakfast"]
+    state, attrs, change = fasting_state(plan, datetime(2026, 10, 31, 7, 0, tzinfo=tz))
+    assert state == "fasting" and change == datetime(2026, 10, 31, 11, 59, 59, tzinfo=tz)
+    # The plan repeats after its last day.
+    state, _, _ = fasting_state(plan, datetime(2026, 11, 20, 22, 0, tzinfo=tz))
+    assert state == "fasting"
+    state, _, _ = fasting_state(plan, datetime(2026, 11, 20, 14, 0, tzinfo=tz))
+    assert state == "eating"

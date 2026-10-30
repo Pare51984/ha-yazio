@@ -15,7 +15,7 @@ from homeassistant.core import HomeAssistant
 
 from .const import CONF_EMAIL, CONF_PASSWORD
 
-TO_REDACT = {CONF_EMAIL, CONF_PASSWORD, "access_token", "refresh_token", "id", "uuid", "user_token", "payment_provider_transaction_id"}
+TO_REDACT = {CONF_EMAIL, CONF_PASSWORD, "access_token", "refresh_token", "id", "uuid", "user_token", "payment_provider_transaction_id", "fasting_countdown_id"}
 
 
 def _shape(value: Any, depth: int = 0) -> Any:

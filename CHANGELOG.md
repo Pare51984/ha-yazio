@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.6.1
+- Fasting status now shows `fasting` or `eating` based on your Yazio plan and switches exactly at the plan's times. Attributes: plan, fasting start and end, next change, meals to skip today.
+
 ## 0.6.0
 - New sensors (all off after setup, only requested while switched on): entries today, last entry, trainings today, training calories today, feeling today, fasting status.
 - New experimental actions that write to your Yazio diary: `yazio.add_water`, `yazio.add_weight`, `yazio.add_food`.

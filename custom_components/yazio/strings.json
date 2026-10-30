@@ -113,7 +113,30 @@
         "name": "Feeling today"
       },
       "fasting_status": {
-        "name": "Fasting status"
+        "name": "Fasting status",
+        "state": {
+          "fasting": "Fasting",
+          "eating": "Eating window",
+          "active": "Active",
+          "none": "No plan"
+        },
+        "state_attributes": {
+          "plan": {
+            "name": "Plan"
+          },
+          "fasting_start": {
+            "name": "Fasting starts"
+          },
+          "fasting_end": {
+            "name": "Fasting ends"
+          },
+          "next_change": {
+            "name": "Next change"
+          },
+          "meals_to_skip_today": {
+            "name": "Meals to skip today"
+          }
+        }
       }
     }
   },

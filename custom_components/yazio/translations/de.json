@@ -113,7 +113,30 @@
         "name": "Stimmung heute"
       },
       "fasting_status": {
-        "name": "Fastenstatus"
+        "name": "Fastenstatus",
+        "state": {
+          "fasting": "Fasten",
+          "eating": "Essensfenster",
+          "active": "Aktiv",
+          "none": "Kein Plan"
+        },
+        "state_attributes": {
+          "plan": {
+            "name": "Plan"
+          },
+          "fasting_start": {
+            "name": "Fastenbeginn"
+          },
+          "fasting_end": {
+            "name": "Fastenende"
+          },
+          "next_change": {
+            "name": "Nächster Wechsel"
+          },
+          "meals_to_skip_today": {
+            "name": "Heute ausgelassene Mahlzeiten"
+          }
+        }
       }
     }
   },

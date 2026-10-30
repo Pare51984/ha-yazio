@@ -34,7 +34,7 @@ All sensors below are included. The ones marked *off* are created but switched o
 | Trainings today (attributes: minutes, names) | – | off |
 | Training calories today | kcal | off |
 | Feeling today (mood tags; note as attribute) | – | off |
-| Fasting status (`active` / `none`; timer details as attributes) | – | off |
+| Fasting status (`fasting` / `eating` / `none`; switches exactly at your plan's times; attributes: plan, fasting start and end, next change, meals to skip today) | – | off |
 
 Switch sensors on under *Settings → Devices & services → Yazio → entities*. Off by default: calories per meal (four extra entities most people don't need), steps and activity calories (usually already come from your phone or watch, so you'd get them twice), the subscription sensors (account info rather than health data) and the detail sensors at the end of the table. Those detail sensors are only requested from Yazio while they are switched on.
 
@@ -57,6 +57,8 @@ These actions write to your Yazio diary, for example from an NFC tag, a button o
 Yazio's API is not documented, so these are experimental. Check the result in the app the first times. `add_food` creates a simple entry with your own name and values, not a product from Yazio's database.
 
 ### Fasting, feeling and trainings
+
+The fasting status follows the plan you set in Yazio and repeats it every week. Example automation idea: notify 15 minutes before `next_change` while the state is `eating`.
 
 The format of these answers is not documented. The sensors read them defensively; if a value looks wrong, download the diagnostics (*Settings → Devices & services → Yazio → ⋮ → Download diagnostics*) and attach it to an issue. Login data is removed from that file and food names are reduced to field names.
 

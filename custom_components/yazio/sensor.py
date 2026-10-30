@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, time, timedelta
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -15,9 +15,10 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfMass, UnitOfTime, UnitOfVolume
-from homeassistant.core import HomeAssistant
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
@@ -190,6 +191,8 @@ SENSORS: tuple[YazioSensorDescription, ...] = (
         key="fasting_status",
         translation_key="fasting_status",
         icon="mdi:timer-outline",
+        device_class=SensorDeviceClass.ENUM,
+        options=["fasting", "eating", "active", "none"],
         entity_registry_enabled_default=False,
         attrs_dict="fasting_details",
     ),
@@ -204,7 +207,10 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     coordinator = entry.runtime_data
-    async_add_entities(YazioSensor(coordinator, entry, desc) for desc in SENSORS)
+    async_add_entities(
+        (YazioFastingSensor if desc.key == "fasting_status" else YazioSensor)(coordinator, entry, desc)
+        for desc in SENSORS
+    )
 
 
 class YazioSensor(CoordinatorEntity, SensorEntity):
@@ -251,3 +257,103 @@ class YazioSensor(CoordinatorEntity, SensorEntity):
         if not day:
             return None
         return dt_util.start_of_local_day(date.fromisoformat(day))
+
+
+def fasting_windows(plan: dict[str, Any], now: datetime) -> list[tuple[datetime, datetime]]:
+    """Real fasting windows around now. The plan repeats after its last day."""
+    base = date.fromisoformat(plan["start_date"])
+    periods = plan["periods"]
+    cycle = max(begin[0] for begin, _ in periods) + 1
+    tz = dt_util.get_default_time_zone()
+    week = max(0, (now.date() - base).days // cycle)
+    windows = []
+    for rep in (week - 1, week, week + 1):
+        if rep < 0:
+            continue
+        offset = rep * cycle
+        for (b_day, b_time), (e_day, e_time) in periods:
+            begin = datetime.combine(base + timedelta(days=offset + b_day), time.fromisoformat(b_time), tz)
+            end = datetime.combine(base + timedelta(days=offset + e_day), time.fromisoformat(e_time), tz)
+            if end > begin:
+                windows.append((begin, end))
+    return sorted(windows)
+
+
+def fasting_state(plan: dict[str, Any], now: datetime) -> tuple[str, dict[str, Any], datetime | None]:
+    """State, attributes and the time of the next change."""
+    windows = fasting_windows(plan, now)
+    current = next(((b, e) for b, e in windows if b <= now < e), None)
+    upcoming = next(((b, e) for b, e in windows if b > now), None)
+    base = date.fromisoformat(plan["start_date"])
+    cycle = max(begin[0] for begin, _ in plan["periods"]) + 1
+    day_index = (now.date() - base).days % cycle if now.date() >= base else None
+    skipped = plan.get("skipped_meals", {}).get(day_index, []) if day_index is not None else []
+    if current:
+        state, change = "fasting", current[1]
+        attrs = {"fasting_start": current[0].isoformat(), "fasting_end": current[1].isoformat()}
+    else:
+        state, change = "eating", upcoming[0] if upcoming else None
+        attrs = {
+            "fasting_start": upcoming[0].isoformat() if upcoming else None,
+            "fasting_end": upcoming[1].isoformat() if upcoming else None,
+        }
+    attrs["next_change"] = change.isoformat() if change else None
+    attrs["meals_to_skip_today"] = skipped
+    return state, attrs, change
+
+
+class YazioFastingSensor(YazioSensor):
+    """Fasting or eating window, switches exactly at the plan's times."""
+
+    _unsub_timer: CALLBACK_TYPE | None = None
+
+    def _plan(self) -> dict[str, Any] | None:
+        plan = (self.coordinator.data or {}).get("fasting_plan_data")
+        return plan if isinstance(plan, dict) and plan.get("periods") else None
+
+    @property
+    def native_value(self):
+        plan = self._plan()
+        if plan is None:
+            return (self.coordinator.data or {}).get("fasting_status")
+        return fasting_state(plan, dt_util.now())[0]
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        attrs = dict(super().extra_state_attributes or {})
+        plan = self._plan()
+        if plan is not None:
+            attrs.update(fasting_state(plan, dt_util.now())[1])
+        return attrs
+
+    def _schedule(self) -> None:
+        if self._unsub_timer:
+            self._unsub_timer()
+            self._unsub_timer = None
+        plan = self._plan()
+        if plan is None:
+            return
+        change = fasting_state(plan, dt_util.now())[2]
+        if change:
+            self._unsub_timer = async_track_point_in_time(self.hass, self._timer_fired, change + timedelta(seconds=1))
+
+    @callback
+    def _timer_fired(self, _now: datetime) -> None:
+        self._unsub_timer = None
+        self.async_write_ha_state()
+        self._schedule()
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        self._schedule()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        self._schedule()
+        super()._handle_coordinator_update()
+
+    async def async_will_remove_from_hass(self) -> None:
+        if self._unsub_timer:
+            self._unsub_timer()
+            self._unsub_timer = None
+        await super().async_will_remove_from_hass()
