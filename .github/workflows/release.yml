@@ -1,9 +1,14 @@
 name: Release
 
+# Creates tag + GitHub release whenever the version in manifest.json
+# changes on main and no release for that version exists yet.
 on:
   push:
-    tags:
-      - "v*"
+    branches: [main]
+    paths:
+      - "custom_components/yazio/manifest.json"
+      - ".github/workflows/release.yml"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -13,18 +18,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check that tag matches manifest version
-        run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          VER=$(python3 -c "import json;print(json.load(open('custom_components/yazio/manifest.json'))['version'])")
-          if [ "$TAG" != "$VER" ]; then echo "Tag $TAG != manifest $VER"; exit 1; fi
-      - name: Create release
+      - name: Create release if missing
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          NOTES_FILE="release-notes/${GITHUB_REF_NAME}.md"
+          VER=$(python3 -c "import json;print(json.load(open('custom_components/yazio/manifest.json'))['version'])")
+          TAG="v$VER"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG exists, nothing to do."
+            exit 0
+          fi
+          NOTES_FILE="release-notes/$TAG.md"
           if [ -f "$NOTES_FILE" ]; then
-            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file "$NOTES_FILE"
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --notes-file "$NOTES_FILE"
           else
-            gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --generate-notes
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --generate-notes
           fi
