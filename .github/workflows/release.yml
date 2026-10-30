@@ -32,9 +32,11 @@ jobs:
             echo "Release $TAG exists, nothing to do."
             exit 0
           fi
+          # ZIP for HACS (zip_release in hacs.json); GitHub counts its downloads.
+          (cd custom_components/yazio && zip -r -X "$GITHUB_WORKSPACE/yazio.zip" . -x '__pycache__/*' '*.pyc')
           NOTES_FILE="release-notes/$TAG.md"
           if [ -f "$NOTES_FILE" ]; then
-            gh release create "$TAG" --target "$TARGET" --title "$TAG" --notes-file "$NOTES_FILE"
+            gh release create "$TAG" yazio.zip --target "$TARGET" --title "$TAG" --notes-file "$NOTES_FILE"
           else
-            gh release create "$TAG" --target "$TARGET" --title "$TAG" --generate-notes
+            gh release create "$TAG" yazio.zip --target "$TARGET" --title "$TAG" --generate-notes
           fi

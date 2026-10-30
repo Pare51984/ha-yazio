@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.5.3
+- Each release now includes `yazio.zip`, which HACS downloads. This lets the release page show download counts. No functional changes.
+
 ## 0.5.2
 - Releases are now created only after the HACS and hassfest checks passed. No functional changes.
 
