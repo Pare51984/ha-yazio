@@ -102,7 +102,7 @@
   "services": {
     "import_weight_history": {
       "name": "Gewichtsverlauf importieren",
-      "description": "Kopiert deine Gewichtseinträge aus Yazio in die Langzeitstatistik von Home Assistant (Statistik yazio:weight_<id>), z. B. für eine Statistik-Grafik. Mehrfaches Ausführen ist unproblematisch.",
+      "description": "Kopiert deine Gewichtseinträge aus Yazio in die Langzeitstatistik von Home Assistant (Statistik, die mit yazio:weight_ beginnt), z. B. für eine Statistik-Grafik. Mehrfaches Ausführen ist unproblematisch.",
       "fields": {
         "config_entry_id": {
           "name": "Yazio-Konto",

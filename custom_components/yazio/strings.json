@@ -102,7 +102,7 @@
   "services": {
     "import_weight_history": {
       "name": "Import weight history",
-      "description": "Copies your weight entries from Yazio into Home Assistant's long-term statistics (statistic yazio:weight_<id>), e.g. for a statistics graph card. Safe to run again.",
+      "description": "Copies your weight entries from Yazio into Home Assistant's long-term statistics (a statistic starting with yazio:weight_), e.g. for a statistics graph card. Safe to run again.",
       "fields": {
         "config_entry_id": {
           "name": "Yazio account",
