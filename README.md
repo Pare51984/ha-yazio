@@ -44,7 +44,7 @@ The fasting sensor only shows which plan is active. Timer details (start, end, p
 
 - Home Assistant **2025.6** or newer
 - The **email address and password** of your Yazio account. Signing in with Google or Apple is not supported by the integration.
-- **Yazio Pro is most likely not required.** The integration reads the same diary that the free app shows. It has only been tested with a Pro account so far, so if you use the free version, a short note in an issue (works / what's missing) helps a lot. Without Pro, the subscription status shows `none`.
+- **Yazio Pro is most likely not required.** The integration reads the same diary that the free app shows. It has only been tested with a Pro account so far, so if you use the free version, a short note in an issue (works / what's missing) helps a lot. Without Pro, the subscription status should show `none`.
 
 **Your Yazio account is linked to Google or Apple?** Then it has no password yet, and you have to create one first:
 
