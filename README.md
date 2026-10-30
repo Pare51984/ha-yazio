@@ -20,6 +20,21 @@ Disabled sensors can be switched on under *Settings → Devices & services → Y
 
 The integration only reads. It never writes to your Yazio diary.
 
+## Requirements
+
+You need the **email address and password** of your Yazio account. Signing in with Google or Apple is not supported by the integration.
+
+**Your Yazio account is linked to Google or Apple?** Then it has no password yet, and you have to create one first:
+
+1. Open the Yazio login (in the app or on yazio.com) and choose **Forgot password**.
+2. Enter the email address of your Google/Apple account and request the reset email.
+3. Set a new password via the link in that email.
+4. Use this email address and the new password in Home Assistant.
+
+It is the same account, so your diary and data stay as they are.
+
+> **Deutsch:** Du brauchst E-Mail-Adresse und Passwort deines Yazio-Kontos. Ist dein Konto mit Google oder Apple verknüpft, hat es noch kein Passwort. Dann im Yazio-Login auf **„Passwort vergessen“** tippen, die E-Mail-Adresse deines Google-/Apple-Kontos eingeben, über den Link in der Mail ein neues Passwort festlegen und damit die Integration einrichten. Deine Daten bleiben erhalten.
+
 ## Installation
 
 **HACS (custom repository)**
@@ -34,9 +49,7 @@ Copy `custom_components/yazio` into your Home Assistant `config/custom_component
 
 ## Setup
 
-*Settings → Devices & services → Add integration → Yazio*, then enter your Yazio email and password.
-
-**Signed up with Google or Apple?** Then your account has no Yazio password yet. Use *Forgot password* on the Yazio login with your account's email address to set one, then sign in here with it.
+*Settings → Devices & services → Add integration → Yazio*, then enter your Yazio email and password (see [Requirements](#requirements) if your account uses Google or Apple sign-in).
 
 ## Notes
 
