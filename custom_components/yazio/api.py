@@ -114,27 +114,47 @@ class YazioClient:
         raise YazioApiError(str(last_error))
 
 
+def _num(value: Any, digits: int = 0) -> float | int | None:
+    """Zahl runden, None/Unsinn bleibt None."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return round(number) if digits == 0 else round(number, digits)
+
+
 def parse_summary(data: dict[str, Any]) -> dict[str, Any]:
-    """Tageszusammenfassung in schlichte Zahlen umwandeln."""
+    """Tageszusammenfassung in flache Werte umwandeln (ein Schlüssel pro Sensor)."""
     meals = data.get("meals") or {}
     totals = {"energy": 0.0, "protein": 0.0, "fat": 0.0, "carb": 0.0}
-    per_meal: dict[str, float] = {}
+    out: dict[str, Any] = {}
     for meal in MEALS:
         nutrients = (meals.get(meal) or {}).get("nutrients") or {}
         kcal = float(nutrients.get("energy.energy") or 0)
-        per_meal[meal] = round(kcal)
+        out[f"{meal}_energy"] = round(kcal)
         totals["energy"] += kcal
         totals["protein"] += float(nutrients.get("nutrient.protein") or 0)
         totals["fat"] += float(nutrients.get("nutrient.fat") or 0)
         totals["carb"] += float(nutrients.get("nutrient.carb") or 0)
     goals = data.get("goals") or {}
-    return {
-        "energy": round(totals["energy"]),
-        "protein": round(totals["protein"], 1),
-        "fat": round(totals["fat"], 1),
-        "carb": round(totals["carb"], 1),
-        "per_meal": per_meal,
-        "goal": round(float(goals["energy.energy"])) if goals.get("energy.energy") else None,
-        "activity_energy": data.get("activity_energy"),
-        "unit": (data.get("units") or {}).get("unit_energy", "kcal"),
-    }
+    user = data.get("user") or {}
+    out.update(
+        {
+            "energy": round(totals["energy"]),
+            "protein": round(totals["protein"], 1),
+            "fat": round(totals["fat"], 1),
+            "carb": round(totals["carb"], 1),
+            "water": _num(data.get("water_intake")),
+            "steps": _num(data.get("steps")),
+            "activity_energy": _num(data.get("activity_energy")),
+            "goal_energy": _num(goals.get("energy.energy")),
+            "goal_protein": _num(goals.get("nutrient.protein"), 1),
+            "goal_fat": _num(goals.get("nutrient.fat"), 1),
+            "goal_carb": _num(goals.get("nutrient.carb"), 1),
+            "goal_water": _num(goals.get("water")),
+            "goal_steps": _num(goals.get("activity.step")),
+            "goal_weight": _num(goals.get("bodyvalue.weight"), 1),
+            "current_weight": _num(user.get("current_weight"), 1),
+        }
+    )
+    return out

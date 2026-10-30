@@ -1,12 +1,18 @@
-"""One sensor: calories eaten today according to Yazio."""
+"""Sensors for the values in Yazio's daily summary."""
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date, datetime
-from typing import Any
 
-from homeassistant.components.sensor import SensorEntity, SensorStateClass
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfMass, UnitOfVolume
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -15,36 +21,97 @@ from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
 
-MEAL_ATTRS = {
-    "breakfast": "breakfast_kcal",
-    "lunch": "lunch_kcal",
-    "dinner": "dinner_kcal",
-    "snack": "snacks_kcal",
-}
+KCAL = "kcal"
+STEPS = "steps"
+
+
+@dataclass(frozen=True, kw_only=True)
+class YazioSensorDescription(SensorEntityDescription):
+    """daily=True: value accumulates over the day and resets at midnight."""
+
+    daily: bool = False
+
+
+def _daily(key: str, unit: str, icon: str, enabled: bool = True, **kw) -> YazioSensorDescription:
+    return YazioSensorDescription(
+        key=key,
+        translation_key=key,
+        native_unit_of_measurement=unit,
+        state_class=SensorStateClass.TOTAL,
+        icon=icon,
+        entity_registry_enabled_default=enabled,
+        daily=True,
+        **kw,
+    )
+
+
+def _goal(key: str, unit: str, icon: str, enabled: bool = False, **kw) -> YazioSensorDescription:
+    return YazioSensorDescription(
+        key=key,
+        translation_key=key,
+        native_unit_of_measurement=unit,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon=icon,
+        entity_registry_enabled_default=enabled,
+        **kw,
+    )
+
+
+SENSORS: tuple[YazioSensorDescription, ...] = (
+    # Eaten today (enabled by default)
+    _daily("energy", KCAL, "mdi:food-apple"),
+    _daily("protein", UnitOfMass.GRAMS, "mdi:food-steak"),
+    _daily("fat", UnitOfMass.GRAMS, "mdi:oil"),
+    _daily("carb", UnitOfMass.GRAMS, "mdi:bread-slice"),
+    # Per meal (off by default)
+    _daily("breakfast_energy", KCAL, "mdi:coffee", enabled=False),
+    _daily("lunch_energy", KCAL, "mdi:food", enabled=False),
+    _daily("dinner_energy", KCAL, "mdi:food-variant", enabled=False),
+    _daily("snack_energy", KCAL, "mdi:cookie", enabled=False),
+    # Other daily values Yazio tracks (off by default; often come from other apps)
+    _daily(
+        "water",
+        UnitOfVolume.MILLILITERS,
+        "mdi:cup-water",
+        enabled=False,
+        device_class=SensorDeviceClass.VOLUME,
+    ),
+    _daily("steps", STEPS, "mdi:walk", enabled=False),
+    _daily("activity_energy", KCAL, "mdi:fire", enabled=False),
+    # Goals set in Yazio (calorie goal on, the rest off)
+    _goal("goal_energy", KCAL, "mdi:target", enabled=True),
+    _goal("goal_protein", UnitOfMass.GRAMS, "mdi:target"),
+    _goal("goal_fat", UnitOfMass.GRAMS, "mdi:target"),
+    _goal("goal_carb", UnitOfMass.GRAMS, "mdi:target"),
+    _goal("goal_water", UnitOfVolume.MILLILITERS, "mdi:target", device_class=SensorDeviceClass.VOLUME),
+    _goal("goal_steps", STEPS, "mdi:target"),
+    _goal("goal_weight", UnitOfMass.KILOGRAMS, "mdi:scale-bathroom", device_class=SensorDeviceClass.WEIGHT),
+    _goal("current_weight", UnitOfMass.KILOGRAMS, "mdi:scale-bathroom", device_class=SensorDeviceClass.WEIGHT),
+)
+
+# The first released sensor keeps its original unique_id, so existing
+# entity_ids, history and dashboards stay as they are.
+LEGACY_UNIQUE_SUFFIX = {"energy": "kalorien_heute"}
 
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    async_add_entities([YazioCaloriesSensor(entry.runtime_data, entry)])
+    coordinator = entry.runtime_data
+    async_add_entities(YazioSensor(coordinator, entry, desc) for desc in SENSORS)
 
 
-class YazioCaloriesSensor(CoordinatorEntity, SensorEntity):
-    """Calories today; macros and goal as attributes.
+class YazioSensor(CoordinatorEntity, SensorEntity):
+    """One value from the Yazio daily summary."""
 
-    state_class TOTAL with a daily last_reset, so long-term statistics
-    hold real daily sums ("change" per day works in statistics graphs).
-    """
-
+    entity_description: YazioSensorDescription
     _attr_has_entity_name = True
-    _attr_translation_key = "calories_today"
-    _attr_native_unit_of_measurement = "kcal"
-    _attr_state_class = SensorStateClass.TOTAL
-    _attr_icon = "mdi:food-apple"
 
-    def __init__(self, coordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator, entry: ConfigEntry, description: YazioSensorDescription) -> None:
         super().__init__(coordinator)
-        self._attr_unique_id = f"{entry.entry_id}_kalorien_heute"
+        self.entity_description = description
+        suffix = LEGACY_UNIQUE_SUFFIX.get(description.key, description.key)
+        self._attr_unique_id = f"{entry.entry_id}_{suffix}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name="Yazio",
@@ -53,26 +120,15 @@ class YazioCaloriesSensor(CoordinatorEntity, SensorEntity):
         )
 
     @property
-    def native_value(self) -> int | None:
-        return self.coordinator.data.get("energy") if self.coordinator.data else None
+    def native_value(self):
+        data = self.coordinator.data or {}
+        return data.get(self.entity_description.key)
 
     @property
     def last_reset(self) -> datetime | None:
-        data = self.coordinator.data or {}
-        if not data.get("date"):
+        if not self.entity_description.daily:
             return None
-        return dt_util.start_of_local_day(date.fromisoformat(data["date"]))
-
-    @property
-    def extra_state_attributes(self) -> dict[str, Any]:
-        data = self.coordinator.data or {}
-        attrs: dict[str, Any] = {
-            "date": data.get("date"),
-            "goal_kcal": data.get("goal"),
-            "protein_g": data.get("protein"),
-            "fat_g": data.get("fat"),
-            "carbs_g": data.get("carb"),
-        }
-        for meal, key in MEAL_ATTRS.items():
-            attrs[key] = (data.get("per_meal") or {}).get(meal)
-        return attrs
+        day = (self.coordinator.data or {}).get("date")
+        if not day:
+            return None
+        return dt_util.start_of_local_day(date.fromisoformat(day))

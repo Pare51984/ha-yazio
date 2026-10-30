@@ -6,9 +6,17 @@ Brings the calories you logged in [Yazio](https://www.yazio.com) today into Home
 
 ## What you get
 
-One sensor, `sensor.yazio_calories_today` (German UI: *Kalorien heute*), in kcal. It updates every 15 minutes and resets at local midnight. Its long-term statistics hold real daily totals, so a statistics graph with *change* per day shows what you ate each day.
+Sensors from Yazio's daily summary, updated every 15 minutes. Daily values reset at local midnight and their long-term statistics hold real daily totals, so a statistics graph with *change* per day shows each day.
 
-Attributes: `date`, `goal_kcal` (your Yazio goal), `protein_g`, `fat_g`, `carbs_g`, and kcal per meal (`breakfast_kcal`, `lunch_kcal`, `dinner_kcal`, `snacks_kcal`).
+| Sensor | Enabled by default |
+|---|---|
+| Calories, protein, fat, carbs eaten today | yes |
+| Calorie goal | yes |
+| Calories per meal (breakfast, lunch, dinner, snacks) | no |
+| Water, steps, activity calories today (as recorded in Yazio) | no |
+| Goals for protein, fat, carbs, water, steps, goal weight; current weight | no |
+
+Disabled sensors can be switched on under *Settings → Devices & services → Yazio → entities*. Steps, activity and weight usually come from another app or device; they are off by default so you don't get the same value twice.
 
 The integration only reads. It never writes to your Yazio diary.
 

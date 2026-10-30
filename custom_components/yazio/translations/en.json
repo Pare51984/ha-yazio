@@ -4,11 +4,16 @@
       "user": {
         "title": "Connect Yazio",
         "description": "Email and password of your Yazio account. If you signed up with Google or Apple, set a password first via \"Forgot password\" in Yazio.",
-        "data": { "email": "Email", "password": "Password" }
+        "data": {
+          "email": "Email",
+          "password": "Password"
+        }
       },
       "reauth_confirm": {
         "title": "Sign in to Yazio again",
-        "data": { "password": "Password" }
+        "data": {
+          "password": "Password"
+        }
       }
     },
     "error": {
@@ -23,7 +28,63 @@
   },
   "entity": {
     "sensor": {
-      "calories_today": { "name": "Calories today" }
+      "energy": {
+        "name": "Calories today"
+      },
+      "protein": {
+        "name": "Protein today"
+      },
+      "fat": {
+        "name": "Fat today"
+      },
+      "carb": {
+        "name": "Carbs today"
+      },
+      "breakfast_energy": {
+        "name": "Breakfast calories"
+      },
+      "lunch_energy": {
+        "name": "Lunch calories"
+      },
+      "dinner_energy": {
+        "name": "Dinner calories"
+      },
+      "snack_energy": {
+        "name": "Snack calories"
+      },
+      "water": {
+        "name": "Water today"
+      },
+      "steps": {
+        "name": "Steps today"
+      },
+      "activity_energy": {
+        "name": "Activity calories today"
+      },
+      "goal_energy": {
+        "name": "Calorie goal"
+      },
+      "goal_protein": {
+        "name": "Protein goal"
+      },
+      "goal_fat": {
+        "name": "Fat goal"
+      },
+      "goal_carb": {
+        "name": "Carbs goal"
+      },
+      "goal_water": {
+        "name": "Water goal"
+      },
+      "goal_steps": {
+        "name": "Step goal"
+      },
+      "goal_weight": {
+        "name": "Goal weight"
+      },
+      "current_weight": {
+        "name": "Current weight"
+      }
     }
   }
 }
