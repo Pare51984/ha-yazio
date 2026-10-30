@@ -193,9 +193,10 @@ def parse_streak(data: Any, today: str) -> dict[str, Any] | None:
     if not days:
         return {"streak": 0, "streak_freezes": None, "streak_date": None}
     entry = data[days[-1]] if isinstance(data[days[-1]], dict) else {}
+    # Yazio liefert für Tage ohne laufenden Streak einen Eintrag ohne Zahl.
     return {
-        "streak": _num(entry.get("streak_count")),
-        "streak_freezes": _num(entry.get("freeze_count")),
+        "streak": _num(entry.get("streak_count")) or 0,
+        "streak_freezes": _num(entry.get("freeze_count")) or 0,
         "streak_date": days[-1][:10],
     }
 

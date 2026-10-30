@@ -139,3 +139,18 @@ async def test_import_weight_history(recorder_mock, hass: HomeAssistant, yazio_a
     )
     means = [row["mean"] for row in stats[statistic_id]]
     assert means == [114.2, 113.0]
+
+
+async def test_streak_without_count_is_zero(recorder_mock, hass: HomeAssistant, aioclient_mock) -> None:
+    today = dt_util.now().date().isoformat()
+    aioclient_mock.post(f"{BASE}/oauth/token", json={"access_token": "tok", "expires_in": 172800})
+    aioclient_mock.get(f"{BASE}/user/widgets/daily-summary", json=SUMMARY)
+    aioclient_mock.get(f"{BASE}/user/streak", json={today: {"daytimes": []}})
+    aioclient_mock.get(f"{BASE}/user/subscription/latest", status=404)
+    registry = er.async_get(hass)
+    entry = await _setup(hass)
+    entity_id = registry.async_get_entity_id("sensor", DOMAIN, f"{entry.entry_id}_streak")
+    registry.async_update_entity(entity_id, disabled_by=None)
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).state == "0"
