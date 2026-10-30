@@ -99,13 +99,12 @@
         "state": {
           "will_renew": "Verlängert sich automatisch",
           "will_not_renew": "Verlängert sich nicht",
-          "canceled": "Gekündigt",
-          "cancelled": "Gekündigt",
           "expired": "Abgelaufen",
           "on_hold": "Pausiert",
           "paused": "Pausiert",
           "grace_period": "Kulanzzeitraum",
-          "none": "Kein Abo"
+          "none": "Kein Abo",
+          "unknown": "Unbekannt"
         }
       },
       "subscription_end": {

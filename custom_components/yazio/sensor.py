@@ -138,7 +138,7 @@ SENSORS: tuple[YazioSensorDescription, ...] = (
         translation_key="subscription_status",
         icon="mdi:crown",
         entity_registry_enabled_default=False,
-        attrs=("subscription_type", "subscription_gateway", "subscription_start", "subscription_changed"),
+        attrs=("subscription_type", "subscription_gateway", "subscription_start", "subscription_changed", "subscription_raw_status"),
     ),
     YazioSensorDescription(
         key="subscription_end",

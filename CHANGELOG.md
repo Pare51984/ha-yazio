@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.1
+- Subscription status: every cancelled / non-renewing value from Yazio now shows as *Does not renew*. Yazio's original value is kept as attribute `subscription_raw_status`.
+
 ## 0.8.0
 - New option *Update interval* (5, 15 or 30 minutes, default 15).
 - Daily values update right after midnight instead of up to one interval later.

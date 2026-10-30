@@ -218,12 +218,27 @@ def parse_streak(data: Any, today: str) -> dict[str, Any] | None:
     }
 
 
+def normalize_subscription_status(raw: Any) -> str:
+    """Yazio's cancel values are undocumented: everything that means
+    'cancelled / won't renew' becomes will_not_renew."""
+    if not isinstance(raw, str) or not raw:
+        return "unknown"
+    value = raw.strip().lower()
+    if value == "will_renew":
+        return value
+    if "cancel" in value or "not_renew" in value or "wont_renew" in value or value in ("will_expire", "non_renewing"):
+        return "will_not_renew"
+    return value
+
+
 def parse_subscription(data: Any) -> dict[str, Any] | None:
     """Neuestes Abo auswerten. Ohne Abo liefert Yazio leer/404."""
     if not isinstance(data, dict) or not data:
         return {"subscription_status": "none", "subscription_end": None}
+    raw = data.get("status") or "unknown"
     return {
-        "subscription_status": data.get("status") or "unknown",
+        "subscription_status": normalize_subscription_status(raw),
+        "subscription_raw_status": raw,
         "subscription_end": data.get("end"),
         "subscription_start": data.get("start"),
         "subscription_type": data.get("type"),

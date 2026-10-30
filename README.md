@@ -27,7 +27,7 @@ All sensors below are included. The ones marked *off* are created but switched o
 | Goal weight / current weight | kg | **on** |
 | Streak (days in a row you logged, `0` if none; streak freezes as attribute) | d | **on** |
 | Active fasting plan (Yazio's internal plan name, e.g. `16_8_early_fasting_v2`, or `inactive`) | – | **on** |
-| Subscription status (as reported by Yazio, e.g. `will_renew`; `none` if you never had Pro; attributes: plan type, store, start, last change) | – | off |
+| Subscription status (`will_renew` = renews automatically, `will_not_renew` = cancelled, `none` if you never had Pro; attributes: plan type, store, start, last change, Yazio's original value) | – | off |
 | Subscription ends | date | off |
 | Entries today (number of diary entries) | – | off |
 | Last entry (time of the most recent diary entry) | time | off |

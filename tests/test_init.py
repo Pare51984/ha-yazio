@@ -371,3 +371,15 @@ async def test_refresh_after_midnight(recorder_mock, hass: HomeAssistant, yazio_
     await hass.async_block_till_done()
     assert any("daily-summary" in str(url) for _, url, _, _ in yazio_api.mock_calls)
     assert entry.runtime_data.data["date"] == tomorrow.isoformat()
+
+
+def test_subscription_status_normalized() -> None:
+    from custom_components.yazio.api import parse_subscription
+
+    assert parse_subscription({"status": "will_renew"})["subscription_status"] == "will_renew"
+    for raw in ("canceled", "cancelled", "CANCELED_BY_USER", "will_not_renew"):
+        result = parse_subscription({"status": raw})
+        assert result["subscription_status"] == "will_not_renew"
+        assert result["subscription_raw_status"] == raw
+    assert parse_subscription({"status": "expired"})["subscription_status"] == "expired"
+    assert parse_subscription(None)["subscription_status"] == "none"

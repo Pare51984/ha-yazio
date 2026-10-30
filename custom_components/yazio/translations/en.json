@@ -99,13 +99,12 @@
         "state": {
           "will_renew": "Renews automatically",
           "will_not_renew": "Does not renew",
-          "canceled": "Canceled",
-          "cancelled": "Canceled",
           "expired": "Expired",
           "on_hold": "On hold",
           "paused": "Paused",
           "grace_period": "Grace period",
-          "none": "No subscription"
+          "none": "No subscription",
+          "unknown": "Unknown"
         }
       },
       "subscription_end": {
