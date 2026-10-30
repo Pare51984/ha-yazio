@@ -1,12 +1,12 @@
 # Yazio (unofficial) for Home Assistant
 
-Brings what you log in [Yazio](https://www.yazio.com) into Home Assistant as sensors: calories and macros eaten today, your goals, water, streak, fasting plan and subscription. Build a calorie balance, dashboards and notifications without typing anything twice.
+Brings what you log in [Yazio](https://www.yazio.com) into Home Assistant: calories and macros eaten today, your goals, water, streak, fasting status and subscription as sensors, an optional fasting calendar, and actions to log water, weight and food from Home Assistant. Build a calorie balance, dashboards and notifications without typing anything twice.
 
 > **Unofficial.** Yazio has no public API. This integration uses the same private endpoints as the Yazio app, as documented by community projects such as [yazio-mcp](https://github.com/fliptheweb/yazio-mcp). It can stop working whenever Yazio changes its backend. Not affiliated with or endorsed by YAZIO GmbH. Use it with your own account and at your own risk.
 
 ## What you get
 
-Sensors from your Yazio account, updated every 15 minutes (streak and subscription hourly). Daily values reset at local midnight and their long-term statistics hold real daily totals, so a statistics graph with *change* per day shows each day.
+Sensors from your Yazio account, updated every 15 minutes by default (adjustable, see [Options](#options); streak and subscription hourly). Daily values reset at local midnight and their long-term statistics hold real daily totals, so a statistics graph with *change* per day shows each day.
 
 All sensors below are included. The ones marked *off* are created but switched off after setup, so your entity list stays tidy; switch on what you need.
 
@@ -57,7 +57,7 @@ Under *Settings → Devices & services → Yazio → Configure*:
 
 Switch on **Fasting calendar** under *Configure*. It adds a calendar with one event per fasting window of your Yazio plan, shown in Home Assistant's calendar view and usable as an automation trigger. Switching it off removes the calendar again. Off by default.
 
-Want the fasting windows in another calendar (e.g. Google)? Copy them with an automation. Example, runs daily and adds tomorrow's windows (replace both calendar entities with yours):
+Want the fasting windows in another calendar (e.g. Google)? Copy them with an automation. Example, runs daily and adds tomorrow's windows. Replace both calendar entities with yours; with Home Assistant in German the Yazio calendar is usually `calendar.yazio_fasten`.
 
 ```yaml
 alias: Copy Yazio fasting windows
@@ -103,7 +103,7 @@ All three were tested against a real Yazio account. Yazio's API is unofficial, s
 
 The fasting status follows the plan you set in Yazio and repeats it every week. Example automation idea: notify 15 minutes before `next_change` while the state is `eating`.
 
-The format of these answers is not documented. The sensors read them defensively; if a value looks wrong, download the diagnostics (*Settings → Devices & services → Yazio → ⋮ → Download diagnostics*) and attach it to an issue. Login data is removed from that file and food names are reduced to field names.
+Feeling and trainings were checked with an account that had no such entries yet, so their values are read defensively; if a value looks wrong, download the diagnostics (*Settings → Devices & services → Yazio → ⋮ → Download diagnostics*) and attach it to an issue. Login data is removed from that file and food names are reduced to field names.
 
 ## Requirements
 
