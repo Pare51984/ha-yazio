@@ -31,7 +31,8 @@ The fasting sensor only shows which plan is active. Timer details (start, end, p
 
 ## Requirements
 
-You need the **email address and password** of your Yazio account. Signing in with Google or Apple is not supported by the integration.
+- Home Assistant **2025.6** or newer
+- The **email address and password** of your Yazio account. Signing in with Google or Apple is not supported by the integration.
 
 **Your Yazio account is linked to Google or Apple?** Then it has no password yet, and you have to create one first:
 
@@ -56,6 +57,10 @@ It is the same account, so your diary and data stay as they are.
 
 Copy `custom_components/yazio` into your Home Assistant `config/custom_components/` folder and restart.
 
+**Updating**
+
+HACS checks custom repositories for new versions only about every 48 hours. To see a new release right away: HACS → *Yazio (unofficial)* → three-dot menu → *Update information*, then install the update and restart Home Assistant. What changed is listed in the [changelog](CHANGELOG.md) and on the [releases page](https://github.com/Pare51984/ha-yazio/releases).
+
 ## Setup
 
 *Settings → Devices & services → Add integration → Yazio*, then enter your Yazio email and password (see [Requirements](#requirements) if your account uses Google or Apple sign-in).
@@ -69,7 +74,7 @@ Copy `custom_components/yazio` into your Home Assistant `config/custom_component
 
 Please open an issue with your Home Assistant version and the relevant log lines (Settings → System → Logs, filter for `yazio`). Remove your email address from logs before posting.
 
-This repository is maintained with the help of an AI assistant (Claude). Replies on issues may be AI-generated and say so.
+This repository is maintained with the help of an AI assistant (Claude); code changes are tested before each release.
 
 ## License
 
