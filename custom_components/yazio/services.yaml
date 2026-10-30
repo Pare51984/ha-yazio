@@ -1,0 +1,12 @@
+import_weight_history:
+  fields:
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: yazio
+    start_date:
+      required: false
+      example: "2022-01-01"
+      selector:
+        date:

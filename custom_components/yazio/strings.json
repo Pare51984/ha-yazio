@@ -84,6 +84,34 @@
       },
       "current_weight": {
         "name": "Current weight"
+      },
+      "streak": {
+        "name": "Streak"
+      },
+      "fasting_plan": {
+        "name": "Active fasting plan"
+      },
+      "subscription_status": {
+        "name": "Subscription status"
+      },
+      "subscription_end": {
+        "name": "Subscription ends"
+      }
+    }
+  },
+  "services": {
+    "import_weight_history": {
+      "name": "Import weight history",
+      "description": "Copies your weight entries from Yazio into Home Assistant's long-term statistics (statistic yazio:weight_<id>), e.g. for a statistics graph card. Safe to run again.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Yazio account",
+          "description": "Only needed if you set up more than one Yazio account."
+        },
+        "start_date": {
+          "name": "Start date",
+          "description": "First day to import. Default: 5 years ago."
+        }
       }
     }
   }

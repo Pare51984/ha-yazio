@@ -8,6 +8,8 @@ CONF_EMAIL = "email"
 CONF_PASSWORD = "password"
 
 SCAN_INTERVAL = timedelta(minutes=15)
+# Streak and subscription change rarely.
+EXTRA_INTERVAL = timedelta(hours=1)
 
 # Die Yazio-API ist inoffiziell. Es gibt zwei bekannte Zugangsprofile:
 # v15 mit dem älteren App-Client (genutzt von yazio-mcp und yazio-cli) und

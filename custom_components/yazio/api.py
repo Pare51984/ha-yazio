@@ -66,18 +66,39 @@ class YazioClient:
         self._expires_at = time.time() + float(data.get("expires_in", 3600)) - 300
         self._profile = profile
 
-    async def _fetch_summary(self, profile: dict[str, Any], day: str) -> dict[str, Any]:
+    async def _get_json(
+        self, profile: dict[str, Any], path: str, params: dict[str, str] | None = None
+    ) -> Any:
         async with self._session.get(
-            f"{profile['base_url']}/user/widgets/daily-summary",
-            params={"date": day},
+            f"{profile['base_url']}{path}",
+            params=params,
             headers=self._headers(profile),
             timeout=aiohttp.ClientTimeout(total=20),
         ) as resp:
             if resp.status == 401:
                 raise YazioAuthError("Token abgelaufen")
             if resp.status != 200:
-                raise YazioApiError(f"HTTP {resp.status}: {await resp.text()}")
+                raise YazioApiError(f"{path} HTTP {resp.status}: {await resp.text()}")
             return await resp.json(content_type=None)
+
+    async def _fetch_summary(self, profile: dict[str, Any], day: str) -> dict[str, Any]:
+        return await self._get_json(profile, "/user/widgets/daily-summary", {"date": day})
+
+    async def async_get_extra(self, path: str, params: dict[str, str] | None = None) -> Any:
+        """Zusatzdaten mit der bestehenden Sitzung holen (nach async_get_summary).
+
+        Wirft YazioApiError, wenn keine Sitzung besteht oder der Abruf scheitert.
+        Ein Login wird hier bewusst nicht ausgelöst; das macht der nächste
+        reguläre Abruf der Tageszusammenfassung.
+        """
+        if not (self._profile and self._token and time.time() < self._expires_at):
+            raise YazioApiError("Keine aktive Sitzung")
+        try:
+            return await self._get_json(self._profile, path, params)
+        except YazioAuthError as err:
+            raise YazioApiError(str(err)) from err
+        except aiohttp.ClientError as err:
+            raise YazioApiError(str(err)) from err
 
     async def async_validate(self) -> None:
         """Für den Einrichtungsdialog: Login und ein Testabruf."""
@@ -155,6 +176,54 @@ def parse_summary(data: dict[str, Any]) -> dict[str, Any]:
             "goal_steps": _num(goals.get("activity.step")),
             "goal_weight": _num(goals.get("bodyvalue.weight"), 1),
             "current_weight": _num(user.get("current_weight"), 1),
+            "fasting_plan": data.get("active_fasting_countdown_template_key") or "inactive",
         }
     )
     return out
+
+
+def parse_streak(data: Any, today: str) -> dict[str, Any] | None:
+    """Streak-Kalender {"YYYY-MM-DD": {streak_count, freeze_count, ...}} auswerten.
+
+    Nimmt den Eintrag von heute, sonst den jüngsten Tag davor.
+    """
+    if not isinstance(data, dict):
+        return None
+    days = sorted(d for d in data if isinstance(d, str) and d[:10] <= today)
+    if not days:
+        return {"streak": 0, "streak_freezes": None, "streak_date": None}
+    entry = data[days[-1]] if isinstance(data[days[-1]], dict) else {}
+    return {
+        "streak": _num(entry.get("streak_count")),
+        "streak_freezes": _num(entry.get("freeze_count")),
+        "streak_date": days[-1][:10],
+    }
+
+
+def parse_subscription(data: Any) -> dict[str, Any] | None:
+    """Neuestes Abo auswerten. Ohne Abo liefert Yazio leer/404."""
+    if not isinstance(data, dict) or not data:
+        return {"subscription_status": "none", "subscription_end": None}
+    return {
+        "subscription_status": data.get("status") or "unknown",
+        "subscription_end": data.get("end"),
+        "subscription_start": data.get("start"),
+        "subscription_type": data.get("type"),
+        "subscription_gateway": data.get("gateway"),
+        "subscription_changed": data.get("last_status_change_at"),
+    }
+
+
+def parse_weight_history(data: Any) -> list[tuple[str, float]]:
+    """Gewichtseinträge [{date, value}, ...] als (Zeitstempel, kg) sortiert."""
+    if isinstance(data, dict):
+        data = data.get("items") or data.get("entries") or list(data.values())
+    out: list[tuple[str, float]] = []
+    for item in data or []:
+        if not isinstance(item, dict):
+            continue
+        value = _num(item.get("value"), 2)
+        when = item.get("date")
+        if value is not None and isinstance(when, str):
+            out.append((when, float(value)))
+    return sorted(out)

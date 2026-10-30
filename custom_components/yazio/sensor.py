@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime
+from typing import Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -12,7 +14,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfMass, UnitOfVolume
+from homeassistant.const import UnitOfMass, UnitOfTime, UnitOfVolume
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -30,6 +32,19 @@ class YazioSensorDescription(SensorEntityDescription):
     """daily=True: value accumulates over the day and resets at midnight."""
 
     daily: bool = False
+    value_fn: Callable[[Any], Any] | None = None
+    attrs: tuple[str, ...] = ()
+
+
+def _timestamp(value: Any) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    parsed = dt_util.parse_datetime(value.replace(" ", "T"))
+    if parsed is None:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=dt_util.UTC)
+    return parsed
 
 
 def _daily(key: str, unit: str, icon: str, enabled: bool = True, **kw) -> YazioSensorDescription:
@@ -87,6 +102,37 @@ SENSORS: tuple[YazioSensorDescription, ...] = (
     _goal("goal_steps", STEPS, "mdi:target"),
     _goal("goal_weight", UnitOfMass.KILOGRAMS, "mdi:scale-bathroom", device_class=SensorDeviceClass.WEIGHT),
     _goal("current_weight", UnitOfMass.KILOGRAMS, "mdi:scale-bathroom", device_class=SensorDeviceClass.WEIGHT),
+    # Streak, fasting, subscription (off by default)
+    YazioSensorDescription(
+        key="streak",
+        translation_key="streak",
+        native_unit_of_measurement=UnitOfTime.DAYS,
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:fire-circle",
+        entity_registry_enabled_default=False,
+        attrs=("streak_freezes", "streak_date"),
+    ),
+    YazioSensorDescription(
+        key="fasting_plan",
+        translation_key="fasting_plan",
+        icon="mdi:timer-sand",
+        entity_registry_enabled_default=False,
+    ),
+    YazioSensorDescription(
+        key="subscription_status",
+        translation_key="subscription_status",
+        icon="mdi:crown",
+        entity_registry_enabled_default=False,
+        attrs=("subscription_type", "subscription_gateway", "subscription_start", "subscription_changed"),
+    ),
+    YazioSensorDescription(
+        key="subscription_end",
+        translation_key="subscription_end",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        icon="mdi:calendar-end",
+        entity_registry_enabled_default=False,
+        value_fn=_timestamp,
+    ),
 )
 
 # The first released sensor keeps its original unique_id, so existing
@@ -122,7 +168,17 @@ class YazioSensor(CoordinatorEntity, SensorEntity):
     @property
     def native_value(self):
         data = self.coordinator.data or {}
-        return data.get(self.entity_description.key)
+        value = data.get(self.entity_description.key)
+        if self.entity_description.value_fn:
+            return self.entity_description.value_fn(value)
+        return value
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        if not self.entity_description.attrs:
+            return None
+        data = self.coordinator.data or {}
+        return {key: data.get(key) for key in self.entity_description.attrs}
 
     @property
     def last_reset(self) -> datetime | None:

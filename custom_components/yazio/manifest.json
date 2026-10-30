@@ -3,10 +3,11 @@
   "name": "Yazio (unofficial)",
   "codeowners": ["@Pare51984"],
   "config_flow": true,
+  "dependencies": ["recorder"],
   "documentation": "https://github.com/Pare51984/ha-yazio",
   "integration_type": "service",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/Pare51984/ha-yazio/issues",
   "requirements": [],
-  "version": "0.3.0"
+  "version": "0.4.0"
 }

@@ -84,6 +84,34 @@
       },
       "current_weight": {
         "name": "Aktuelles Gewicht"
+      },
+      "streak": {
+        "name": "Streak"
+      },
+      "fasting_plan": {
+        "name": "Aktiver Fastenplan"
+      },
+      "subscription_status": {
+        "name": "Abo-Status"
+      },
+      "subscription_end": {
+        "name": "Abo endet"
+      }
+    }
+  },
+  "services": {
+    "import_weight_history": {
+      "name": "Gewichtsverlauf importieren",
+      "description": "Kopiert deine Gewichtseinträge aus Yazio in die Langzeitstatistik von Home Assistant (Statistik yazio:weight_<id>), z. B. für eine Statistik-Grafik. Mehrfaches Ausführen ist unproblematisch.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Yazio-Konto",
+          "description": "Nur nötig, wenn mehrere Yazio-Konten eingerichtet sind."
+        },
+        "start_date": {
+          "name": "Startdatum",
+          "description": "Erster Tag des Imports. Standard: vor 5 Jahren."
+        }
       }
     }
   }
