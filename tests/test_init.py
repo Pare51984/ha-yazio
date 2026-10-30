@@ -80,9 +80,17 @@ async def test_default_sensors(recorder_mock, hass: HomeAssistant, yazio_api) ->
     assert hass.states.get("sensor.yazio_calories_today").state == "78"
     assert hass.states.get("sensor.yazio_protein_today").state == "1.3"
     assert hass.states.get("sensor.yazio_carbs_today").state == "16.9"
-    # disabled by default
-    assert hass.states.get("sensor.yazio_streak") is None
+    # on by default
+    assert hass.states.get("sensor.yazio_streak").state == "7"
+    assert hass.states.get("sensor.yazio_active_fasting_plan").state == "16:8"
+    assert hass.states.get("sensor.yazio_water_today").state == "250"
+    assert hass.states.get("sensor.yazio_water_goal").state == "2000"
+    assert hass.states.get("sensor.yazio_protein_goal").state == "105.9"
+    assert hass.states.get("sensor.yazio_current_weight").state == "113.0"
+    # off by default
     assert hass.states.get("sensor.yazio_subscription_status") is None
+    assert hass.states.get("sensor.yazio_steps_today") is None
+    assert hass.states.get("sensor.yazio_breakfast_calories") is None
 
 
 async def test_extra_sensors_when_enabled(recorder_mock, hass: HomeAssistant, yazio_api) -> None:

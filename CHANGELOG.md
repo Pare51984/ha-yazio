@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0
+- More sensors are on after setup: protein/fat/carbs goal, water today, water goal, goal weight, current weight, streak, active fasting plan.
+- Still off after setup: calories per meal, steps, activity calories, step goal, subscription status and end.
+- Existing installations keep their own on/off choices; only new installs get the new defaults.
+
 ## 0.4.2
 - Streak sensor shows `0` instead of `unknown` when no streak is running.
 

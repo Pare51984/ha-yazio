@@ -18,19 +18,19 @@ All sensors below are included. The ones marked *off* are created but switched o
 | Carbs today | g | **on** |
 | Calorie goal | kcal | **on** |
 | Breakfast / lunch / dinner / snack calories | kcal | off |
-| Water today | mL | off |
+| Water today | mL | **on** |
 | Steps today | steps | off |
 | Activity calories today | kcal | off |
-| Protein / fat / carbs goal | g | off |
-| Water goal | mL | off |
+| Protein / fat / carbs goal | g | **on** |
+| Water goal | mL | **on** |
 | Step goal | steps | off |
-| Goal weight / current weight | kg | off |
-| Streak (days in a row you logged, `0` if none; streak freezes as attribute) | d | off |
-| Active fasting plan (Yazio's internal plan name, e.g. `16_8_early_fasting_v2`, or `inactive`) | – | off |
+| Goal weight / current weight | kg | **on** |
+| Streak (days in a row you logged, `0` if none; streak freezes as attribute) | d | **on** |
+| Active fasting plan (Yazio's internal plan name, e.g. `16_8_early_fasting_v2`, or `inactive`) | – | **on** |
 | Subscription status (as reported by Yazio, e.g. `will_renew`; `none` if you never had Pro; attributes: plan type, store, start, last change) | – | off |
 | Subscription ends | date | off |
 
-Switch sensors on under *Settings → Devices & services → Yazio → entities*. Steps, activity and weight usually come from another app or device; they are off by default so you don't get the same value twice.
+Switch sensors on under *Settings → Devices & services → Yazio → entities*. Off by default: calories per meal (four extra entities most people don't need), steps and activity calories (usually already come from your phone or watch, so you'd get them twice), and the subscription sensors (account info rather than health data).
 
 The integration only reads. It never writes to your Yazio diary.
 
