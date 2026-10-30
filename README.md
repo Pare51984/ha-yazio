@@ -1,12 +1,12 @@
 # Yazio (unofficial) for Home Assistant
 
-Brings the calories you logged in [Yazio](https://www.yazio.com) today into Home Assistant as one sensor, so you can build a calorie balance, dashboards and notifications without typing anything twice.
+Brings what you log in [Yazio](https://www.yazio.com) into Home Assistant as sensors: calories and macros eaten today, your goals, water, streak, fasting plan and subscription. Build a calorie balance, dashboards and notifications without typing anything twice.
 
 > **Unofficial.** Yazio has no public API. This integration uses the same private endpoints as the Yazio app, as documented by community projects such as [yazio-mcp](https://github.com/fliptheweb/yazio-mcp). It can stop working whenever Yazio changes its backend. Not affiliated with or endorsed by YAZIO GmbH. Use it with your own account and at your own risk.
 
 ## What you get
 
-Sensors from Yazio's daily summary, updated every 15 minutes (streak and subscription hourly). Daily values reset at local midnight and their long-term statistics hold real daily totals, so a statistics graph with *change* per day shows each day.
+Sensors from your Yazio account, updated every 15 minutes (streak and subscription hourly). Daily values reset at local midnight and their long-term statistics hold real daily totals, so a statistics graph with *change* per day shows each day.
 
 | Sensor | Enabled by default |
 |---|---|
@@ -15,9 +15,9 @@ Sensors from Yazio's daily summary, updated every 15 minutes (streak and subscri
 | Calories per meal (breakfast, lunch, dinner, snacks) | no |
 | Water, steps, activity calories today (as recorded in Yazio) | no |
 | Goals for protein, fat, carbs, water, steps, goal weight; current weight | no |
-| Streak (days in a row you logged), with streak freezes as attribute | no |
-| Active fasting plan (e.g. `16:8`, or `inactive`) | no |
-| Subscription status (e.g. `active`, `cancelled`, `none`) and subscription end date | no |
+| Streak (days in a row you logged, `0` if none), with streak freezes as attribute | no |
+| Active fasting plan: Yazio's internal plan name, e.g. `16_8_early_fasting_v2`, or `inactive` | no |
+| Subscription status as reported by Yazio (e.g. `will_renew`; `none` if you never had Pro) and subscription end date. Attributes: plan type, store, start, last change | no |
 
 Disabled sensors can be switched on under *Settings → Devices & services → Yazio → entities*. Steps, activity and weight usually come from another app or device; they are off by default so you don't get the same value twice.
 
