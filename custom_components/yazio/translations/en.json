@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect Yazio",
+        "description": "Email and password of your Yazio account. If you signed up with Google or Apple, set a password first via \"Forgot password\" in Yazio.",
+        "data": { "email": "Email", "password": "Password" }
+      },
+      "reauth_confirm": {
+        "title": "Sign in to Yazio again",
+        "data": { "password": "Password" }
+      }
+    },
+    "error": {
+      "invalid_auth": "Login rejected. Check email and password.",
+      "cannot_connect": "Yazio did not respond as expected. The unofficial API may have changed.",
+      "unknown": "Unexpected error, see the log."
+    },
+    "abort": {
+      "already_configured": "This Yazio account is already set up.",
+      "reauth_successful": "Signed in again."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "calories_today": { "name": "Calories today" }
+    }
+  }
+}

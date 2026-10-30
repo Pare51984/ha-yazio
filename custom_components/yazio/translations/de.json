@@ -1,0 +1,29 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Yazio verbinden",
+        "description": "E-Mail und Passwort deines Yazio-Kontos. Wenn du dich mit Google oder Apple registriert hast, setze in Yazio zuerst über \"Passwort vergessen\" ein Passwort.",
+        "data": { "email": "E-Mail", "password": "Passwort" }
+      },
+      "reauth_confirm": {
+        "title": "Yazio neu anmelden",
+        "data": { "password": "Passwort" }
+      }
+    },
+    "error": {
+      "invalid_auth": "Login abgelehnt. E-Mail oder Passwort prüfen.",
+      "cannot_connect": "Yazio hat nicht wie erwartet geantwortet. Die inoffizielle Schnittstelle hat sich eventuell geändert.",
+      "unknown": "Unerwarteter Fehler, siehe Log."
+    },
+    "abort": {
+      "already_configured": "Dieses Yazio-Konto ist schon eingerichtet.",
+      "reauth_successful": "Neu angemeldet."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "calories_today": { "name": "Kalorien heute" }
+    }
+  }
+}
