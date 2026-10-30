@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0
+- New option *Fasting calendar* under Configure: a calendar with one event per fasting window of your Yazio plan. Off by default; switching it off removes the calendar again.
+- README: example automation to copy the fasting windows into another calendar.
+
 ## 0.6.1
 - Fasting status now shows `fasting` or `eating` based on your Yazio plan and switches exactly at the plan's times. Attributes: plan, fasting start and end, next change, meals to skip today.
 

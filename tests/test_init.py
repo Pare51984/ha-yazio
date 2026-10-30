@@ -300,3 +300,40 @@ def test_fasting_state_windows(hass: HomeAssistant) -> None:
     assert state == "fasting"
     state, _, _ = fasting_state(plan, datetime(2026, 11, 20, 14, 0, tzinfo=tz))
     assert state == "eating"
+
+
+async def test_fasting_calendar_option(recorder_mock, hass: HomeAssistant, yazio_api) -> None:
+    from datetime import datetime
+
+    entry = await _setup(hass)
+    registry = er.async_get(hass)
+    assert registry.async_get_entity_id("calendar", DOMAIN, f"{entry.entry_id}_fasting_calendar") is None
+
+    # Switch on via "Configure".
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(flow["flow_id"], {"fasting_calendar": True})
+    assert result["type"] == "create_entry"
+    await hass.async_block_till_done()
+    entity_id = registry.async_get_entity_id("calendar", DOMAIN, f"{entry.entry_id}_fasting_calendar")
+    assert entity_id and hass.states.get(entity_id) is not None
+
+    tz = dt_util.get_default_time_zone()
+    today = dt_util.now().date()
+    start = datetime.combine(today, datetime.min.time(), tz)
+    response = await hass.services.async_call(
+        "calendar",
+        "get_events",
+        {"entity_id": entity_id, "start_date_time": start, "end_date_time": start + timedelta(days=2)},
+        blocking=True,
+        return_response=True,
+    )
+    events = response[entity_id]["events"]
+    assert events and events[0]["summary"] == "Fasting 16:8"
+    assert "T20:00:00" in events[0]["start"]
+
+    # Switch off: the calendar is removed completely.
+    flow = await hass.config_entries.options.async_init(entry.entry_id)
+    await hass.config_entries.options.async_configure(flow["flow_id"], {"fasting_calendar": False})
+    await hass.async_block_till_done()
+    assert registry.async_get_entity_id("calendar", DOMAIN, f"{entry.entry_id}_fasting_calendar") is None
+    assert hass.states.get(entity_id) is None

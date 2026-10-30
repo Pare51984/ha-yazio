@@ -6,6 +6,8 @@ DOMAIN = "yazio"
 
 CONF_EMAIL = "email"
 CONF_PASSWORD = "password"
+# Option: show the fasting plan as a calendar (off by default).
+CONF_FASTING_CALENDAR = "fasting_calendar"
 
 SCAN_INTERVAL = timedelta(minutes=15)
 # Streak and subscription change rarely.

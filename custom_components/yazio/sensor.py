@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -23,6 +23,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
+from .fasting import fasting_state, fasting_windows  # noqa: F401
 
 KCAL = "kcal"
 STEPS = "steps"
@@ -257,49 +258,6 @@ class YazioSensor(CoordinatorEntity, SensorEntity):
         if not day:
             return None
         return dt_util.start_of_local_day(date.fromisoformat(day))
-
-
-def fasting_windows(plan: dict[str, Any], now: datetime) -> list[tuple[datetime, datetime]]:
-    """Real fasting windows around now. The plan repeats after its last day."""
-    base = date.fromisoformat(plan["start_date"])
-    periods = plan["periods"]
-    cycle = max(begin[0] for begin, _ in periods) + 1
-    tz = dt_util.get_default_time_zone()
-    week = max(0, (now.date() - base).days // cycle)
-    windows = []
-    for rep in (week - 1, week, week + 1):
-        if rep < 0:
-            continue
-        offset = rep * cycle
-        for (b_day, b_time), (e_day, e_time) in periods:
-            begin = datetime.combine(base + timedelta(days=offset + b_day), time.fromisoformat(b_time), tz)
-            end = datetime.combine(base + timedelta(days=offset + e_day), time.fromisoformat(e_time), tz)
-            if end > begin:
-                windows.append((begin, end))
-    return sorted(windows)
-
-
-def fasting_state(plan: dict[str, Any], now: datetime) -> tuple[str, dict[str, Any], datetime | None]:
-    """State, attributes and the time of the next change."""
-    windows = fasting_windows(plan, now)
-    current = next(((b, e) for b, e in windows if b <= now < e), None)
-    upcoming = next(((b, e) for b, e in windows if b > now), None)
-    base = date.fromisoformat(plan["start_date"])
-    cycle = max(begin[0] for begin, _ in plan["periods"]) + 1
-    day_index = (now.date() - base).days % cycle if now.date() >= base else None
-    skipped = plan.get("skipped_meals", {}).get(day_index, []) if day_index is not None else []
-    if current:
-        state, change = "fasting", current[1]
-        attrs = {"fasting_start": current[0].isoformat(), "fasting_end": current[1].isoformat()}
-    else:
-        state, change = "eating", upcoming[0] if upcoming else None
-        attrs = {
-            "fasting_start": upcoming[0].isoformat() if upcoming else None,
-            "fasting_end": upcoming[1].isoformat() if upcoming else None,
-        }
-    attrs["next_change"] = change.isoformat() if change else None
-    attrs["meals_to_skip_today"] = skipped
-    return state, attrs, change
 
 
 class YazioFastingSensor(YazioSensor):

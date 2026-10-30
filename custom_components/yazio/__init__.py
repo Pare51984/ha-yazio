@@ -33,7 +33,7 @@ from .api import (
     parse_summary,
     parse_weight_history,
 )
-from .const import CONF_EMAIL, CONF_PASSWORD, DOMAIN, EXTRA_INTERVAL, SCAN_INTERVAL
+from .const import CONF_EMAIL, CONF_FASTING_CALENDAR, CONF_PASSWORD, DOMAIN, EXTRA_INTERVAL, SCAN_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.SENSOR]
@@ -78,6 +78,8 @@ class YazioCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         data["date"] = today
 
         enabled = self._enabled_keys()
+        if enabled is not None and self.config_entry.options.get(CONF_FASTING_CALENDAR):
+            enabled = enabled | {"fasting_calendar"}
         now = dt_util.utcnow()
         if self._extras_fetched is None or now - self._extras_fetched >= EXTRA_INTERVAL:
             await self._async_fetch_hourly(today, enabled)
@@ -143,7 +145,7 @@ class YazioCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             (("entries_today", "last_entry"), "consumed_items", "/user/consumed-items", {"date": today}, parse_consumed_items),
             (("trainings_today", "training_energy"), "exercises", "/user/exercises", {"date": today}, parse_exercises),
             (("feeling",), "feeling", "/user/feeling", {"date": today}, parse_feeling),
-            (("fasting_status",), "fasting", "/user/fasting-countdowns", None, parse_fasting),
+            (("fasting_status", "fasting_calendar"), "fasting", "/user/fasting-countdowns", None, parse_fasting),
         )
         for keys, raw_key, path, params, parser in jobs:
             if not wanted(*keys):
@@ -332,9 +334,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = YazioCoordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setups(entry, _platforms(entry))
+    if not entry.options.get(CONF_FASTING_CALENDAR):
+        # Calendar switched off: remove it completely instead of leaving an orphan.
+        registry = er.async_get(hass)
+        if entity_id := registry.async_get_entity_id(
+            Platform.CALENDAR, DOMAIN, f"{entry.entry_id}_fasting_calendar"
+        ):
+            registry.async_remove(entity_id)
+    entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
 
 
+def _platforms(entry: ConfigEntry) -> list[Platform]:
+    if entry.options.get(CONF_FASTING_CALENDAR):
+        return [*PLATFORMS, Platform.CALENDAR]
+    return PLATFORMS
+
+
+async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    return await hass.config_entries.async_unload_platforms(entry, _platforms(entry))

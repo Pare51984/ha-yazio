@@ -138,6 +138,11 @@
           }
         }
       }
+    },
+    "calendar": {
+      "fasting_calendar": {
+        "name": "Fasting"
+      }
     }
   },
   "services": {
@@ -218,6 +223,19 @@
         "meal": {
           "name": "Meal",
           "description": "breakfast, lunch, dinner or snack."
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Yazio options",
+        "data": {
+          "fasting_calendar": "Fasting calendar"
+        },
+        "data_description": {
+          "fasting_calendar": "Shows the fasting windows of your Yazio plan as a calendar in Home Assistant. Switching it off removes the calendar again."
         }
       }
     }
