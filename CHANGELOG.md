@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0
+- New sensors (all off after setup, only requested while switched on): entries today, last entry, trainings today, training calories today, feeling today, fasting status.
+- New experimental actions that write to your Yazio diary: `yazio.add_water`, `yazio.add_weight`, `yazio.add_food`.
+- Diagnostics download with the raw answers of the optional endpoints (login data removed, food names reduced to field names).
+- Optional data that fails to load never affects the main sensors.
+
 ## 0.5.3
 - Each release now includes `yazio.zip`, which HACS downloads. This lets the release page show download counts. No functional changes.
 

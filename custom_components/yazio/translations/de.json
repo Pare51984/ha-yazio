@@ -96,6 +96,24 @@
       },
       "subscription_end": {
         "name": "Abo endet"
+      },
+      "entries_today": {
+        "name": "Einträge heute"
+      },
+      "last_entry": {
+        "name": "Letzter Eintrag"
+      },
+      "trainings_today": {
+        "name": "Trainings heute"
+      },
+      "training_energy": {
+        "name": "Trainingskalorien heute"
+      },
+      "feeling": {
+        "name": "Stimmung heute"
+      },
+      "fasting_status": {
+        "name": "Fastenstatus"
       }
     }
   },
@@ -111,6 +129,72 @@
         "start_date": {
           "name": "Startdatum",
           "description": "Erster Tag des Imports. Standard: vor 5 Jahren."
+        }
+      }
+    },
+    "add_water": {
+      "name": "Wasser eintragen",
+      "description": "Fügt eine Menge Wasser zur heutigen Summe in Yazio hinzu.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Yazio-Konto",
+          "description": "Nur nötig, wenn mehrere Yazio-Konten eingerichtet sind."
+        },
+        "amount": {
+          "name": "Menge",
+          "description": "Wasser in Millilitern."
+        }
+      }
+    },
+    "add_weight": {
+      "name": "Gewicht eintragen",
+      "description": "Trägt ein Gewicht in Yazio ein, z. B. von einer smarten Waage.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Yazio-Konto",
+          "description": "Nur nötig, wenn mehrere Yazio-Konten eingerichtet sind."
+        },
+        "weight": {
+          "name": "Gewicht",
+          "description": "Gewicht in kg."
+        },
+        "when": {
+          "name": "Zeitpunkt",
+          "description": "Wann gemessen wurde. Standard: jetzt."
+        }
+      }
+    },
+    "add_food": {
+      "name": "Essen eintragen (Schnelleintrag)",
+      "description": "Trägt einen Schnelleintrag mit Kalorien und optional Makros ins Yazio-Tagebuch ein. Experimentell.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Yazio-Konto",
+          "description": "Nur nötig, wenn mehrere Yazio-Konten eingerichtet sind."
+        },
+        "name": {
+          "name": "Name",
+          "description": "Was du gegessen hast."
+        },
+        "calories": {
+          "name": "Kalorien",
+          "description": "kcal."
+        },
+        "protein": {
+          "name": "Eiweiß",
+          "description": "Gramm, optional."
+        },
+        "fat": {
+          "name": "Fett",
+          "description": "Gramm, optional."
+        },
+        "carbs": {
+          "name": "Kohlenhydrate",
+          "description": "Gramm, optional."
+        },
+        "meal": {
+          "name": "Mahlzeit",
+          "description": "breakfast, lunch, dinner oder snack."
         }
       }
     }

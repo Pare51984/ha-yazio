@@ -34,6 +34,19 @@ class YazioSensorDescription(SensorEntityDescription):
     daily: bool = False
     value_fn: Callable[[Any], Any] | None = None
     attrs: tuple[str, ...] = ()
+    attrs_dict: str | None = None  # data key holding a dict that becomes the attributes
+
+
+def _local_timestamp(value: Any) -> datetime | None:
+    """Yazio diary times are local ('2026-10-30 13:18:40')."""
+    if not isinstance(value, str):
+        return None
+    parsed = dt_util.parse_datetime(value.replace(" ", "T"))
+    if parsed is None:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=dt_util.get_default_time_zone())
+    return parsed
 
 
 def _timestamp(value: Any) -> datetime | None:
@@ -133,6 +146,53 @@ SENSORS: tuple[YazioSensorDescription, ...] = (
         entity_registry_enabled_default=False,
         value_fn=_timestamp,
     ),
+    # Today's details (off by default; only fetched when switched on)
+    YazioSensorDescription(
+        key="entries_today",
+        translation_key="entries_today",
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:notebook-edit",
+        entity_registry_enabled_default=False,
+    ),
+    YazioSensorDescription(
+        key="last_entry",
+        translation_key="last_entry",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        icon="mdi:clock-check",
+        entity_registry_enabled_default=False,
+        value_fn=_local_timestamp,
+    ),
+    YazioSensorDescription(
+        key="trainings_today",
+        translation_key="trainings_today",
+        state_class=SensorStateClass.MEASUREMENT,
+        icon="mdi:dumbbell",
+        entity_registry_enabled_default=False,
+        attrs=("training_minutes", "training_names"),
+    ),
+    YazioSensorDescription(
+        key="training_energy",
+        translation_key="training_energy",
+        native_unit_of_measurement=KCAL,
+        state_class=SensorStateClass.TOTAL,
+        icon="mdi:fire",
+        entity_registry_enabled_default=False,
+        daily=True,
+    ),
+    YazioSensorDescription(
+        key="feeling",
+        translation_key="feeling",
+        icon="mdi:emoticon-outline",
+        entity_registry_enabled_default=False,
+        attrs=("feeling_note",),
+    ),
+    YazioSensorDescription(
+        key="fasting_status",
+        translation_key="fasting_status",
+        icon="mdi:timer-outline",
+        entity_registry_enabled_default=False,
+        attrs_dict="fasting_details",
+    ),
 )
 
 # The first released sensor keeps its original unique_id, so existing
@@ -175,9 +235,12 @@ class YazioSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
+        data = self.coordinator.data or {}
+        if self.entity_description.attrs_dict:
+            details = data.get(self.entity_description.attrs_dict)
+            return dict(details) if isinstance(details, dict) else None
         if not self.entity_description.attrs:
             return None
-        data = self.coordinator.data or {}
         return {key: data.get(key) for key in self.entity_description.attrs}
 
     @property

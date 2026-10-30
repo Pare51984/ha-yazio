@@ -29,16 +29,36 @@ All sensors below are included. The ones marked *off* are created but switched o
 | Active fasting plan (Yazio's internal plan name, e.g. `16_8_early_fasting_v2`, or `inactive`) | – | **on** |
 | Subscription status (as reported by Yazio, e.g. `will_renew`; `none` if you never had Pro; attributes: plan type, store, start, last change) | – | off |
 | Subscription ends | date | off |
+| Entries today (number of diary entries) | – | off |
+| Last entry (time of the most recent diary entry) | time | off |
+| Trainings today (attributes: minutes, names) | – | off |
+| Training calories today | kcal | off |
+| Feeling today (mood tags; note as attribute) | – | off |
+| Fasting status (`active` / `none`; timer details as attributes) | – | off |
 
-Switch sensors on under *Settings → Devices & services → Yazio → entities*. Off by default: calories per meal (four extra entities most people don't need), steps and activity calories (usually already come from your phone or watch, so you'd get them twice), and the subscription sensors (account info rather than health data).
+Switch sensors on under *Settings → Devices & services → Yazio → entities*. Off by default: calories per meal (four extra entities most people don't need), steps and activity calories (usually already come from your phone or watch, so you'd get them twice), the subscription sensors (account info rather than health data) and the detail sensors at the end of the table. Those detail sensors are only requested from Yazio while they are switched on.
 
-The integration only reads. It never writes to your Yazio diary.
+The sensors only read. Something is written to your Yazio diary only when you call one of the write actions below yourself.
 
 ### Import your weight history
 
 Weighed yourself in Yazio for years? The action **Yazio: Import weight history** (`yazio.import_weight_history`) copies those entries into Home Assistant's long-term statistics. Optional field: `start_date` (default: 5 years back). Afterwards add a *Statistics graph* card and pick the statistic **Yazio weight**. Running it again is safe.
 
-The fasting sensor only shows which plan is active. Timer details (start, end, progress) are not exposed by the API in a documented form yet. If you use fasting and want more, open an issue.
+### Write actions (experimental)
+
+These actions write to your Yazio diary, for example from an NFC tag, a button or an automation:
+
+| Action | Fields |
+|---|---|
+| `yazio.add_water` | `amount` in mL, added to today's water |
+| `yazio.add_weight` | `weight` in kg, optional `when` |
+| `yazio.add_food` | `name`, `calories`, optional `protein` / `fat` / `carbs` in g, `meal` (breakfast, lunch, dinner, snack) |
+
+Yazio's API is not documented, so these are experimental. Check the result in the app the first times. `add_food` creates a simple entry with your own name and values, not a product from Yazio's database.
+
+### Fasting, feeling and trainings
+
+The format of these answers is not documented. The sensors read them defensively; if a value looks wrong, download the diagnostics (*Settings → Devices & services → Yazio → ⋮ → Download diagnostics*) and attach it to an issue. Login data is removed from that file and food names are reduced to field names.
 
 ## Requirements
 

@@ -64,6 +64,24 @@ def yazio_api(aioclient_mock):
         f"{BASE}/user/bodyvalues/weight",
         json=[{"date": "2026-10-01 07:10:00", "value": 114.2}, {"date": "2026-10-20 07:05:00", "value": 113.0}],
     )
+    aioclient_mock.get(
+        f"{BASE}/user/consumed-items",
+        json={
+            "products": [{"id": "p1", "date": f"{today} 08:10:00", "daytime": "breakfast", "product_id": "x", "amount": 30}],
+            "recipe_portions": [],
+            "simple_products": [{"id": "s1", "date": f"{today} 12:45:00", "daytime": "lunch", "name": "Shake", "nutrients": {"energy.energy": 400}}],
+        },
+    )
+    aioclient_mock.get(
+        f"{BASE}/user/exercises",
+        json={"training": [{"name": "cycling", "energy": 321.0, "duration": 45}], "custom_training": [{"name": "Gym", "energy": 171.0, "duration": 66}], "activity": {"steps": 8132}},
+    )
+    aioclient_mock.get(f"{BASE}/user/feeling", json={"note": "good day", "tags": ["happy", "energetic"]})
+    aioclient_mock.get(f"{BASE}/user/fasting-countdowns", json=[{"template_key": "16_8_early_fasting_v2", "start": f"{today} 20:00:00"}])
+    aioclient_mock.get(f"{BASE}/user/water-intake", json={"water_intake": 250.0, "gateway": None, "source": None})
+    aioclient_mock.post(f"{BASE}/user/water-intake", status=204)
+    aioclient_mock.post(f"{BASE}/user/bodyvalues", status=204)
+    aioclient_mock.post(f"{BASE}/user/consumed-items", status=204)
     return aioclient_mock
 
 
@@ -162,3 +180,78 @@ async def test_streak_without_count_is_zero(recorder_mock, hass: HomeAssistant, 
     await hass.config_entries.async_reload(entry.entry_id)
     await hass.async_block_till_done()
     assert hass.states.get(entity_id).state == "0"
+
+
+NEW_KEYS = ("entries_today", "last_entry", "trainings_today", "training_energy", "feeling", "fasting_status")
+
+
+async def _enable(hass: HomeAssistant, entry, keys) -> dict[str, str]:
+    registry = er.async_get(hass)
+    ids = {}
+    for key in keys:
+        entity_id = registry.async_get_entity_id("sensor", DOMAIN, f"{entry.entry_id}_{key}")
+        assert entity_id, key
+        registry.async_update_entity(entity_id, disabled_by=None)
+        ids[key] = entity_id
+    await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    return ids
+
+
+async def test_today_details_sensors(recorder_mock, hass: HomeAssistant, yazio_api) -> None:
+    entry = await _setup(hass)
+    ids = await _enable(hass, entry, NEW_KEYS)
+    assert hass.states.get(ids["entries_today"]).state == "2"
+    assert hass.states.get(ids["last_entry"]).state.startswith(dt_util.now().date().isoformat())
+    trainings = hass.states.get(ids["trainings_today"])
+    assert trainings.state == "2" and trainings.attributes["training_minutes"] == 111
+    assert hass.states.get(ids["training_energy"]).state == "492"
+    feeling = hass.states.get(ids["feeling"])
+    assert feeling.state == "happy, energetic" and feeling.attributes["feeling_note"] == "good day"
+    fasting = hass.states.get(ids["fasting_status"])
+    assert fasting.state == "active" and fasting.attributes["template_key"] == "16_8_early_fasting_v2"
+
+
+async def test_disabled_details_are_not_fetched(recorder_mock, hass: HomeAssistant, yazio_api) -> None:
+    entry = await _setup(hass)
+    # After the first setup the registry knows which sensors are off.
+    yazio_api.mock_calls.clear()
+    await entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+    called = {str(url) for _, url, _, _ in yazio_api.mock_calls}
+    assert not any("consumed-items" in u or "exercises" in u or "feeling" in u or "fasting" in u for u in called), called
+
+
+async def test_add_water_adds_to_total(recorder_mock, hass: HomeAssistant, yazio_api) -> None:
+    await _setup(hass)
+    yazio_api.mock_calls.clear()
+    await hass.services.async_call(DOMAIN, "add_water", {"amount": 300}, blocking=True)
+    posts = [(url, data) for method, url, data, _ in yazio_api.mock_calls if method == "POST" and "water-intake" in str(url)]
+    assert len(posts) == 1
+    body = posts[0][1]
+    assert body[0]["water_intake"] == 550 and len(body[0]["date"]) == 19
+
+
+async def test_add_weight_and_food(recorder_mock, hass: HomeAssistant, yazio_api) -> None:
+    await _setup(hass)
+    yazio_api.mock_calls.clear()
+    await hass.services.async_call(DOMAIN, "add_weight", {"weight": 112.4}, blocking=True)
+    await hass.services.async_call(
+        DOMAIN, "add_food", {"name": "Shake", "calories": 400, "protein": 40, "meal": "lunch"}, blocking=True
+    )
+    posts = {str(url).rsplit("/", 1)[-1]: data for method, url, data, _ in yazio_api.mock_calls if method == "POST"}
+    assert posts["bodyvalues"]["weight"][0]["value"] == 112.4
+    food = posts["consumed-items"]["simple_products"][0]
+    assert food["name"] == "Shake" and food["daytime"] == "lunch"
+    assert food["nutrients"] == {"energy.energy": 400.0, "nutrient.protein": 40.0}
+
+
+async def test_diagnostics_hide_login_and_food(recorder_mock, hass: HomeAssistant, yazio_api) -> None:
+    from custom_components.yazio.diagnostics import async_get_config_entry_diagnostics
+
+    entry = await _setup(hass)
+    diag = await async_get_config_entry_diagnostics(hass, entry)
+    text = str(diag)
+    assert "a@b.de" not in text and "'x'" not in text
+    assert "Shake" not in text  # food names are reduced to field names
+    assert diag["raw_extras"]["fasting"][0]["template_key"] == "16_8_early_fasting_v2"

@@ -81,6 +81,23 @@ class YazioClient:
                 raise YazioApiError(f"{path} HTTP {resp.status}: {await resp.text()}")
             return await resp.json(content_type=None)
 
+    async def async_post(self, path: str, payload: Any) -> Any:
+        """Schreibender Aufruf (nur für bewusst ausgelöste Aktionen)."""
+        if not (self._profile and self._token and time.time() < self._expires_at):
+            raise YazioApiError("Keine aktive Sitzung")
+        profile = self._profile
+        async with self._session.post(
+            f"{profile['base_url']}{path}",
+            json=payload,
+            headers=self._headers(profile),
+            timeout=aiohttp.ClientTimeout(total=20),
+        ) as resp:
+            if resp.status not in (200, 201, 204):
+                raise YazioApiError(f"{path} HTTP {resp.status}: {await resp.text()}")
+            if resp.status == 204:
+                return None
+            return await resp.json(content_type=None)
+
     async def _fetch_summary(self, profile: dict[str, Any], day: str) -> dict[str, Any]:
         return await self._get_json(profile, "/user/widgets/daily-summary", {"date": day})
 
@@ -95,10 +112,10 @@ class YazioClient:
             raise YazioApiError("Keine aktive Sitzung")
         try:
             return await self._get_json(self._profile, path, params)
-        except YazioAuthError as err:
-            raise YazioApiError(str(err)) from err
-        except aiohttp.ClientError as err:
-            raise YazioApiError(str(err)) from err
+        except YazioApiError:
+            raise
+        except Exception as err:  # noqa: BLE001 - optional data must never break the main update
+            raise YazioApiError(f"{type(err).__name__}: {err}") from err
 
     async def async_validate(self) -> None:
         """Für den Einrichtungsdialog: Login und ein Testabruf."""
@@ -228,3 +245,83 @@ def parse_weight_history(data: Any) -> list[tuple[str, float]]:
         if value is not None and isinstance(when, str):
             out.append((when, float(value)))
     return sorted(out)
+
+
+def parse_consumed_items(data: Any) -> dict[str, Any]:
+    """Einträge des Tages: Anzahl und Zeitpunkt des letzten Eintrags.
+
+    Antwort: {"products": [...], "recipe_portions": [...], "simple_products": [...]},
+    jeder Eintrag mit "date" wie "2026-10-30 13:18:40".
+    """
+    if not isinstance(data, dict):
+        return {"entries_today": None, "last_entry": None}
+    items = [
+        item
+        for key in ("products", "recipe_portions", "simple_products")
+        for item in (data.get(key) or [])
+        if isinstance(item, dict)
+    ]
+    dates = sorted(str(i["date"]) for i in items if i.get("date"))
+    return {"entries_today": len(items), "last_entry": dates[-1] if dates else None}
+
+
+def parse_exercises(data: Any) -> dict[str, Any]:
+    """Trainings des Tages: {"training": [...], "custom_training": [...], "activity": {...}}."""
+    if not isinstance(data, dict):
+        return {"trainings_today": None, "training_energy": None}
+    trainings = [
+        t
+        for key in ("training", "custom_training")
+        for t in (data.get(key) or [])
+        if isinstance(t, dict)
+    ]
+    energy = sum(float(t.get("energy") or 0) for t in trainings)
+    minutes = sum(float(t.get("duration") or 0) for t in trainings)
+    return {
+        "trainings_today": len(trainings),
+        "training_energy": round(energy),
+        "training_minutes": round(minutes),
+        "training_names": [t.get("name") for t in trainings if t.get("name")],
+    }
+
+
+def parse_feeling(data: Any) -> dict[str, Any]:
+    """Stimmungseintrag: {"note": str|null, "tags": [...]}. Format der Tags nicht dokumentiert."""
+    if not isinstance(data, dict):
+        return {"feeling": "none", "feeling_note": None}
+    tags = []
+    for tag in data.get("tags") or []:
+        if isinstance(tag, str):
+            tags.append(tag)
+        elif isinstance(tag, dict):
+            tags.append(str(tag.get("name") or tag.get("key") or tag.get("value") or tag))
+    note = data.get("note") if isinstance(data.get("note"), str) else None
+    state = ", ".join(tags)[:250] if tags else ("note" if note else "none")
+    return {"feeling": state, "feeling_note": note}
+
+
+def parse_fasting(data: Any) -> dict[str, Any]:
+    """Fasten-Countdowns. Das Format ist nicht dokumentiert.
+
+    Bewusst defensiv: Zustand "active", wenn ein Eintrag da ist, sonst "none";
+    einfache Felder des ersten Eintrags als Attribute, damit man in Home
+    Assistant sieht, was Yazio liefert.
+    """
+    entry: Any = data
+    if isinstance(data, list):
+        entry = data[0] if data else None
+    elif isinstance(data, dict):
+        for key in ("countdown", "active", "current", "items", "countdowns"):
+            inner = data.get(key)
+            if isinstance(inner, list):
+                entry = inner[0] if inner else None
+                break
+            if isinstance(inner, dict):
+                entry = inner
+                break
+    if not isinstance(entry, dict) or not entry:
+        return {"fasting_status": "none", "fasting_details": {}}
+    details = {
+        k: v for k, v in entry.items() if isinstance(v, (str, int, float, bool)) or v is None
+    }
+    return {"fasting_status": "active", "fasting_details": details}

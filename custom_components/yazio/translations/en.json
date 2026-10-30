@@ -96,6 +96,24 @@
       },
       "subscription_end": {
         "name": "Subscription ends"
+      },
+      "entries_today": {
+        "name": "Entries today"
+      },
+      "last_entry": {
+        "name": "Last entry"
+      },
+      "trainings_today": {
+        "name": "Trainings today"
+      },
+      "training_energy": {
+        "name": "Training calories today"
+      },
+      "feeling": {
+        "name": "Feeling today"
+      },
+      "fasting_status": {
+        "name": "Fasting status"
       }
     }
   },
@@ -111,6 +129,72 @@
         "start_date": {
           "name": "Start date",
           "description": "First day to import. Default: 5 years ago."
+        }
+      }
+    },
+    "add_water": {
+      "name": "Add water",
+      "description": "Adds an amount of water to today's total in Yazio.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Yazio account",
+          "description": "Only needed if you set up more than one Yazio account."
+        },
+        "amount": {
+          "name": "Amount",
+          "description": "Water to add in millilitres."
+        }
+      }
+    },
+    "add_weight": {
+      "name": "Add weight",
+      "description": "Adds a weight entry to Yazio, e.g. from a smart scale.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Yazio account",
+          "description": "Only needed if you set up more than one Yazio account."
+        },
+        "weight": {
+          "name": "Weight",
+          "description": "Weight in kg."
+        },
+        "when": {
+          "name": "Time",
+          "description": "When it was measured. Default: now."
+        }
+      }
+    },
+    "add_food": {
+      "name": "Add food (quick entry)",
+      "description": "Adds a quick entry with calories and optional macros to your Yazio diary. Experimental.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Yazio account",
+          "description": "Only needed if you set up more than one Yazio account."
+        },
+        "name": {
+          "name": "Name",
+          "description": "What you ate."
+        },
+        "calories": {
+          "name": "Calories",
+          "description": "kcal."
+        },
+        "protein": {
+          "name": "Protein",
+          "description": "Grams, optional."
+        },
+        "fat": {
+          "name": "Fat",
+          "description": "Grams, optional."
+        },
+        "carbs": {
+          "name": "Carbs",
+          "description": "Grams, optional."
+        },
+        "meal": {
+          "name": "Meal",
+          "description": "breakfast, lunch, dinner or snack."
         }
       }
     }
