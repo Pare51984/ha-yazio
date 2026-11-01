@@ -40,6 +40,17 @@ Switch sensors on under *Settings → Devices & services → Yazio → entities*
 
 The sensors only read. Something is written to your Yazio diary only when you call one of the write actions below yourself.
 
+### Not included (and why)
+
+Yazio's API returns a bit more than the integration uses. These parts were left out on purpose:
+
+- **Individual foods** (names, amounts, nutrients per entry): this would put what you eat into Home Assistant's history and logbook in plain text. You get the number of entries and the time of the last one instead.
+- **Protein, fat and carbs per meal, and calorie goals per meal**: another twelve entities for little benefit. Daily totals, daily goals and calories per meal cover most uses.
+- **Past days** (except weight): sensors show today; their long-term statistics build your history from the day you install the integration. Only weight can be imported backwards, see below.
+- **Products from Yazio's food database in `add_food`**: that would need a product search and portion handling. `add_food` creates a simple entry with your own name and values.
+
+Missing something else? Open an issue and describe what you'd use it for.
+
 ### Import your weight history
 
 Weighed yourself in Yazio for years? The action **Yazio: Import weight history** (`yazio.import_weight_history`) copies those entries into Home Assistant's long-term statistics. Optional field: `start_date` (default: 5 years back). Afterwards add a *Statistics graph* card and pick the statistic **Yazio weight**. Running it again is safe.
