@@ -144,11 +144,17 @@ Yazio is in the default HACS list, no custom repository needed:
 
 [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Pare51984&repository=ha-yazio&category=integration)
 
-Added it earlier as a custom repository? That keeps working. You can remove the custom entry once Yazio shows up in the normal list.
+**HACS as custom repository** (alternative, e.g. if Yazio doesn't show up in the search yet)
 
-**Manual**
+1. HACS → three-dot menu → *Custom repositories*
+2. Add `https://github.com/Pare51984/ha-yazio` with category *Integration*
+3. Download *Yazio (unofficial)* and restart Home Assistant
 
-Copy `custom_components/yazio` into your Home Assistant `config/custom_components/` folder and restart.
+Both ways get the same updates. If you added it as a custom repository earlier, it keeps working; you can remove the custom entry once Yazio shows up in the normal list.
+
+**Manual** (without HACS)
+
+Download `yazio.zip` from the [latest release](https://github.com/Pare51984/ha-yazio/releases/latest), unpack it into `config/custom_components/yazio/` (or copy `custom_components/yazio` from this repository) and restart. Updates are then manual too.
 
 **Updating**
 
