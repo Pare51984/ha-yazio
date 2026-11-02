@@ -135,11 +135,16 @@ It is the same account, so your diary and data stay as they are.
 
 ## Installation
 
-**HACS (custom repository)**
+**HACS** (Home Assistant 2026.11 and newer: *Marketplace*)
 
-1. HACS → three-dot menu → *Custom repositories*
-2. Add `https://github.com/Pare51984/ha-yazio` with category *Integration*
-3. Download *Yazio (unofficial)* and restart Home Assistant
+Yazio is in the default HACS list, no custom repository needed:
+
+1. Open HACS (from 2026.11: *Settings → Marketplace*) and search for **Yazio**
+2. Download *Yazio (unofficial)* and restart Home Assistant
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Pare51984&repository=ha-yazio&category=integration)
+
+Added it earlier as a custom repository? That keeps working. You can remove the custom entry once Yazio shows up in the normal list.
 
 **Manual**
 
@@ -147,7 +152,7 @@ Copy `custom_components/yazio` into your Home Assistant `config/custom_component
 
 **Updating**
 
-HACS checks custom repositories for new versions only about every 48 hours. To see a new release right away: HACS → *Yazio (unofficial)* → three-dot menu → *Update information*, then install the update and restart Home Assistant. What changed is listed in the [changelog](CHANGELOG.md) and on the [releases page](https://github.com/Pare51984/ha-yazio/releases).
+New versions appear as an update in Home Assistant. To check right away: HACS → *Yazio (unofficial)* → three-dot menu → *Update information*, then install the update and restart Home Assistant. What changed is listed in the [changelog](CHANGELOG.md) and on the [releases page](https://github.com/Pare51984/ha-yazio/releases).
 
 ## Setup
 
