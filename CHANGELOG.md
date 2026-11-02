@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.8.3
+- Write actions and optional data now log in again when the token has expired, instead of failing until the next scheduled update. Thanks to @frenck for the review hint.
+
 ## 0.8.2
 - Write actions (`add_water`, `add_weight`, `add_food`) tested against a real account and no longer marked experimental.
 - After each write action the sensors update right away, also when several entries are made in a row.

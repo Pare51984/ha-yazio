@@ -383,3 +383,23 @@ def test_subscription_status_normalized() -> None:
         assert result["subscription_raw_status"] == raw
     assert parse_subscription({"status": "expired"})["subscription_status"] == "expired"
     assert parse_subscription(None)["subscription_status"] == "none"
+
+
+async def test_write_logs_in_again_after_token_expired(recorder_mock, hass: HomeAssistant, yazio_api) -> None:
+    entry = await _setup(hass)
+    client = entry.runtime_data.client
+    client._expires_at = 0  # token expired between two polls
+    yazio_api.mock_calls.clear()
+    await hass.services.async_call(DOMAIN, "add_water", {"amount": 100}, blocking=True)
+    calls = [(method, str(url)) for method, url, _, _ in yazio_api.mock_calls]
+    assert any(m == "POST" and u.endswith("/oauth/token") for m, u in calls)
+    assert any(m == "POST" and u.endswith("/user/water-intake") for m, u in calls)
+
+
+async def test_extra_logs_in_again_after_token_expired(recorder_mock, hass: HomeAssistant, yazio_api) -> None:
+    entry = await _setup(hass)
+    client = entry.runtime_data.client
+    client._expires_at = 0
+    yazio_api.mock_calls.clear()
+    assert await client.async_get_extra("/user/streak") is not None
+    assert any(str(url).endswith("/oauth/token") for _, url, _, _ in yazio_api.mock_calls)

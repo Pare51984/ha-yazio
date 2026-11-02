@@ -81,10 +81,29 @@ class YazioClient:
                 raise YazioApiError(f"{path} HTTP {resp.status}: {await resp.text()}")
             return await resp.json(content_type=None)
 
-    async def async_post(self, path: str, payload: Any) -> Any:
-        """Schreibender Aufruf (nur für bewusst ausgelöste Aktionen)."""
-        if not (self._profile and self._token and time.time() < self._expires_at):
-            raise YazioApiError("Keine aktive Sitzung")
+    def _session_valid(self) -> bool:
+        return bool(self._profile and self._token and time.time() < self._expires_at)
+
+    async def _async_ensure_session(self) -> None:
+        """Log in again if the token expired, so actions don't have to wait for the next poll.
+
+        A fresh login (not a token refresh) keeps the phone app signed in.
+        """
+        if self._session_valid():
+            return
+        if self._profile:
+            try:
+                await self._login_with(self._profile)
+                return
+            except YazioAuthError:
+                raise
+            except (YazioApiError, aiohttp.ClientError, TimeoutError):
+                self._profile = None
+                self._token = None
+        # No known profile yet: the summary call tries all profiles and logs in.
+        await self.async_get_summary(time.strftime("%Y-%m-%d"))
+
+    async def _post_once(self, path: str, payload: Any) -> tuple[int, Any]:
         profile = self._profile
         async with self._session.post(
             f"{profile['base_url']}{path}",
@@ -92,26 +111,46 @@ class YazioClient:
             headers=self._headers(profile),
             timeout=aiohttp.ClientTimeout(total=20),
         ) as resp:
-            if resp.status not in (200, 201, 204):
-                raise YazioApiError(f"{path} HTTP {resp.status}: {await resp.text()}")
+            if resp.status in (200, 201):
+                return resp.status, await resp.json(content_type=None)
             if resp.status == 204:
-                return None
-            return await resp.json(content_type=None)
+                return resp.status, None
+            return resp.status, await resp.text()
+
+    async def async_post(self, path: str, payload: Any) -> Any:
+        """Write call (only for actions the user triggers). Logs in again if needed."""
+        try:
+            await self._async_ensure_session()
+            status, body = await self._post_once(path, payload)
+            if status == 401:
+                # Token was rejected early: log in once more and retry.
+                self._token = None
+                await self._async_ensure_session()
+                status, body = await self._post_once(path, payload)
+        except YazioAuthError as err:
+            raise YazioApiError(f"Login rejected: {err}") from err
+        except aiohttp.ClientError as err:
+            raise YazioApiError(f"{type(err).__name__}: {err}") from err
+        if status not in (200, 201, 204):
+            raise YazioApiError(f"{path} HTTP {status}: {body}")
+        return body
 
     async def _fetch_summary(self, profile: dict[str, Any], day: str) -> dict[str, Any]:
         return await self._get_json(profile, "/user/widgets/daily-summary", {"date": day})
 
     async def async_get_extra(self, path: str, params: dict[str, str] | None = None) -> Any:
-        """Zusatzdaten mit der bestehenden Sitzung holen (nach async_get_summary).
+        """Optional data. Logs in again if the token expired.
 
-        Wirft YazioApiError, wenn keine Sitzung besteht oder der Abruf scheitert.
-        Ein Login wird hier bewusst nicht ausgelöst; das macht der nächste
-        reguläre Abruf der Tageszusammenfassung.
+        Raises YazioApiError on any failure, so optional data never breaks the main update.
         """
-        if not (self._profile and self._token and time.time() < self._expires_at):
-            raise YazioApiError("Keine aktive Sitzung")
         try:
-            return await self._get_json(self._profile, path, params)
+            await self._async_ensure_session()
+            try:
+                return await self._get_json(self._profile, path, params)
+            except YazioAuthError:
+                self._token = None
+                await self._async_ensure_session()
+                return await self._get_json(self._profile, path, params)
         except YazioApiError:
             raise
         except Exception as err:  # noqa: BLE001 - optional data must never break the main update
@@ -124,7 +163,7 @@ class YazioClient:
     async def async_get_summary(self, day: str) -> dict[str, Any]:
         """Tageszusammenfassung holen, bei Bedarf (neu) einloggen."""
         # Bekanntes, funktionierendes Profil zuerst.
-        if self._profile and self._token and time.time() < self._expires_at:
+        if self._session_valid():
             try:
                 return await self._fetch_summary(self._profile, day)
             except YazioAuthError:
